@@ -1,6 +1,7 @@
 package com.test.asmaulhusnamemorypractice
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,9 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.MobileAds
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
 import com.test.asmaulhusnamemorypractice.data.AdsManager
 import com.test.asmaulhusnamemorypractice.ui.ad.AdMobBanner
 import com.test.asmaulhusnamemorypractice.ui.ad.InterstitialAdHelper
+import com.test.asmaulhusnamemorypractice.ui.components.AboutDialog
 import com.test.asmaulhusnamemorypractice.ui.components.AsmaulHusnaCard
 import com.test.asmaulhusnamemorypractice.ui.components.CompletionDialog
 import com.test.asmaulhusnamemorypractice.ui.components.HeaderProgress
@@ -29,28 +34,49 @@ import com.test.asmaulhusnamemorypractice.ui.components.NextButton
 import com.test.asmaulhusnamemorypractice.ui.theme.AsmaulHusnaMemoryPracticeTheme
 import com.test.asmaulhusnamemorypractice.ui.viewmodel.MemoryPracticeViewModel
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var adsManager: AdsManager
     private lateinit var interstitialAdHelper: InterstitialAdHelper
     private val viewModel: MemoryPracticeViewModel by viewModels()
+    private val isMobileAdsInitializeCalled = AtomicBoolean(false)
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize Google Mobile Ads SDK
-        MobileAds.initialize(this) {}
-
         // Initialize AdsManager & Interstitial Ad Helper
         adsManager = AdsManager(this)
         interstitialAdHelper = InterstitialAdHelper(this)
 
-        // Fetch remote config on launch
-        lifecycleScope.launch {
-            adsManager.fetchAdsConfig()
+        // Request UMP Consent
+        val params = ConsentRequestParameters.Builder().build()
+        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        
+        consentInformation.requestConsentInfoUpdate(
+            this,
+            params,
+            {
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(this) { loadAndShowError ->
+                    if (loadAndShowError != null) {
+                        Log.w("MainActivity", "UMP Error: ${loadAndShowError.errorCode} ${loadAndShowError.message}")
+                    }
+                    if (consentInformation.canRequestAds()) {
+                        initializeMobileAdsSdk()
+                    }
+                }
+            },
+            { requestConsentError ->
+                Log.w("MainActivity", "UMP Error: ${requestConsentError.errorCode} ${requestConsentError.message}")
+            }
+        )
+
+        // Check if you can initialize in parallel while checking for new consent information.
+        if (consentInformation.canRequestAds()) {
+            initializeMobileAdsSdk()
         }
 
         // Observe the config state to update interstitial helper
@@ -64,6 +90,7 @@ class MainActivity : ComponentActivity() {
             AsmaulHusnaMemoryPracticeTheme {
                 val uiState by viewModel.uiState.collectAsState()
                 val adsConfig by adsManager.configState.collectAsState()
+                var showAboutDialog by remember { mutableStateOf(false) }
                 val activity = this@MainActivity
 
                 Scaffold(
@@ -86,6 +113,13 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             actions = {
+                                // About Button
+                                IconButton(onClick = { showAboutDialog = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = "About App"
+                                    )
+                                }
                                 // Reset Button — placed in TopAppBar, far from banner ad
                                 FilledTonalIconButton(
                                     onClick = {
@@ -193,9 +227,26 @@ class MainActivity : ComponentActivity() {
                                 onDismiss = { viewModel.dismissCompletionDialog() }
                             )
                         }
+
+                        // About Dialog
+                        if (showAboutDialog) {
+                            AboutDialog(onDismiss = { showAboutDialog = false })
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private fun initializeMobileAdsSdk() {
+        if (isMobileAdsInitializeCalled.getAndSet(true)) {
+            return
+        }
+        MobileAds.initialize(this) {}
+        
+        // Fetch remote config on launch after consent is obtained
+        lifecycleScope.launch {
+            adsManager.fetchAdsConfig()
         }
     }
 }
