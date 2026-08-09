@@ -5,26 +5,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.android.gms.ads.MobileAds
 import com.test.asmaulhusnamemorypractice.audio.TtsManager
 import com.test.asmaulhusnamemorypractice.ui.ad.AdMobBanner
 import com.test.asmaulhusnamemorypractice.ui.ad.InterstitialAdHelper
 import com.test.asmaulhusnamemorypractice.ui.components.AsmaulHusnaCard
 import com.test.asmaulhusnamemorypractice.ui.components.CompletionDialog
-import com.test.asmaulhusnamemorypractice.ui.components.ControlButtons
 import com.test.asmaulhusnamemorypractice.ui.components.HeaderProgress
+import com.test.asmaulhusnamemorypractice.ui.components.NextButton
 import com.test.asmaulhusnamemorypractice.ui.theme.AsmaulHusnaMemoryPracticeTheme
 import com.test.asmaulhusnamemorypractice.ui.viewmodel.MemoryPracticeViewModel
 
@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var interstitialAdHelper: InterstitialAdHelper
     private val viewModel: MemoryPracticeViewModel by viewModels()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -48,14 +49,57 @@ class MainActivity : ComponentActivity() {
         setContent {
             AsmaulHusnaMemoryPracticeTheme {
                 val uiState by viewModel.uiState.collectAsState()
-                val context = LocalContext.current
-                val activity = context as? ComponentActivity
+                val activity = this@MainActivity
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Column {
+                                    Text(
+                                        text = "Asmaul Husna",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Memory Practice",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                }
+                            },
+                            actions = {
+                                // Reset Button — placed in TopAppBar, far from banner ad
+                                FilledTonalIconButton(
+                                    onClick = {
+                                        interstitialAdHelper.showAd(activity) {
+                                            viewModel.onReset()
+                                        }
+                                    },
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.RestartAlt,
+                                        contentDescription = "Reset ke Nomor 1"
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
+                        )
+                    },
                     bottomBar = {
-                        // Static non-intrusive bottom banner ad
-                        AdMobBanner()
+                        // Static non-intrusive bottom banner ad with safe padding
+                        Column {
+                            Spacer(modifier = Modifier.height(16.dp)) // Safe distance from buttons
+                            AdMobBanner()
+                        }
                     }
                 ) { innerPadding ->
                     Surface(
@@ -71,74 +115,68 @@ class MainActivity : ComponentActivity() {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.SpaceBetween
                         ) {
+                            // Top section: Progress + Card
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                                // Header Progress Indicator (12 / 99)
+                                // Progress Indicator (12 / 99)
                                 HeaderProgress(
                                     currentIndex = uiState.currentIndex,
                                     totalCount = uiState.totalCount,
-                                    progress = uiState.progress,
-                                    onReset = {
-                                        activity?.let { act ->
-                                            interstitialAdHelper.showAd(act) {
-                                                viewModel.onReset()
-                                            }
-                                        } ?: viewModel.onReset()
-                                    }
+                                    progress = uiState.progress
                                 )
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                                // Active Recall Interactive Card
+                                // Main Practice Card — tap card = NEXT
                                 AsmaulHusnaCard(
                                     item = uiState.currentItem,
-                                    isRevealed = uiState.isRevealed,
-                                    onCardClick = { viewModel.toggleReveal() },
-                                    onPlayAudio = { textToSpeak ->
-                                        ttsManager.speakArabic(textToSpeak)
+                                    onCardTap = {
+                                        viewModel.onNext(
+                                            onRoundFinished = {
+                                                interstitialAdHelper.showAd(activity)
+                                            }
+                                        )
+                                    },
+                                    onPlayAudio = { arabicText ->
+                                        ttsManager.speakArabic(arabicText)
                                     }
                                 )
                             }
 
-                            // Thumb-Friendly Navigation Controls
-                            ControlButtons(
-                                currentIndex = uiState.currentIndex,
-                                totalCount = uiState.totalCount,
-                                isRevealed = uiState.isRevealed,
-                                onPrevious = { viewModel.onPrevious() },
-                                onNext = {
-                                    viewModel.onNext(
-                                        onRoundFinished = {
-                                            activity?.let { act ->
-                                                interstitialAdHelper.showAd(act)
+                            // Bottom section: Big Next Button (placed well above banner)
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                NextButton(
+                                    currentIndex = uiState.currentIndex,
+                                    totalCount = uiState.totalCount,
+                                    onNext = {
+                                        viewModel.onNext(
+                                            onRoundFinished = {
+                                                interstitialAdHelper.showAd(activity)
                                             }
-                                        }
-                                    )
-                                },
-                                onToggleReveal = { viewModel.toggleReveal() },
-                                onReset = {
-                                    activity?.let { act ->
-                                        interstitialAdHelper.showAd(act) {
-                                            viewModel.onReset()
-                                        }
-                                    } ?: viewModel.onReset()
-                                }
-                            )
+                                        )
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
                         }
 
-                        // Round Completion Dialog
+                        // Completion Dialog
                         if (uiState.isCompleted) {
                             CompletionDialog(
                                 onRestart = {
-                                    activity?.let { act ->
-                                        interstitialAdHelper.showAd(act) {
-                                            viewModel.onReset()
-                                        }
-                                    } ?: viewModel.onReset()
+                                    interstitialAdHelper.showAd(activity) {
+                                        viewModel.onReset()
+                                    }
                                 },
                                 onDismiss = { viewModel.dismissCompletionDialog() }
                             )

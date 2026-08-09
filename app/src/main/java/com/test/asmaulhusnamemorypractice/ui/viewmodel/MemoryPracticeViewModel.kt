@@ -10,11 +10,13 @@ import kotlinx.coroutines.flow.update
 
 /**
  * UI State for the Asmaul Husna Memory Practice screen.
+ *
+ * This is a sequential active recall trainer — meanings are always visible.
+ * Tapping the card or pressing Next advances to the next name.
  */
 data class MemoryPracticeUiState(
     val currentIndex: Int = 0,
     val currentItem: AsmaulHusna = AsmaulHusnaRepository.items[0],
-    val isRevealed: Boolean = false, // Concealed by default for Active Recall
     val isCompleted: Boolean = false,
     val totalCount: Int = AsmaulHusnaRepository.items.size
 ) {
@@ -30,14 +32,17 @@ class MemoryPracticeViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MemoryPracticeUiState())
     val uiState: StateFlow<MemoryPracticeUiState> = _uiState.asStateFlow()
 
+    /**
+     * Advance to the next Asmaul Husna.
+     * When reaching the end (#99), mark as completed and invoke callback.
+     */
     fun onNext(onRoundFinished: () -> Unit = {}) {
         _uiState.update { currentState ->
             if (currentState.currentIndex < currentState.totalCount - 1) {
                 val nextIdx = currentState.currentIndex + 1
                 currentState.copy(
                     currentIndex = nextIdx,
-                    currentItem = AsmaulHusnaRepository.items[nextIdx],
-                    isRevealed = false
+                    currentItem = AsmaulHusnaRepository.items[nextIdx]
                 )
             } else {
                 onRoundFinished()
@@ -46,42 +51,21 @@ class MemoryPracticeViewModel : ViewModel() {
         }
     }
 
-    fun onPrevious() {
-        _uiState.update { currentState ->
-            if (currentState.currentIndex > 0) {
-                val prevIdx = currentState.currentIndex - 1
-                currentState.copy(
-                    currentIndex = prevIdx,
-                    currentItem = AsmaulHusnaRepository.items[prevIdx],
-                    isRevealed = false
-                )
-            } else {
-                currentState
-            }
-        }
-    }
-
-    fun toggleReveal() {
-        _uiState.update { currentState ->
-            currentState.copy(isRevealed = !currentState.isRevealed)
-        }
-    }
-
+    /**
+     * Reset back to #1 (Ar-Rahman).
+     */
     fun onReset(onResetTriggered: () -> Unit = {}) {
         onResetTriggered()
-        _uiState.update { currentState ->
-            currentState.copy(
+        _uiState.update {
+            it.copy(
                 currentIndex = 0,
                 currentItem = AsmaulHusnaRepository.items[0],
-                isRevealed = false,
                 isCompleted = false
             )
         }
     }
 
     fun dismissCompletionDialog() {
-        _uiState.update { currentState ->
-            currentState.copy(isCompleted = false)
-        }
+        _uiState.update { it.copy(isCompleted = false) }
     }
 }
