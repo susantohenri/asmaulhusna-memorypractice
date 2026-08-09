@@ -36,14 +36,14 @@ fun NextButton(
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
     ) {
         Text(
-            text = if (currentIndex >= totalCount - 1) "Selesai ✓" else "Lanjut ke Berikutnya",
+            text = if (currentIndex >= totalCount - 1) "Completed ✓" else "Next",
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-            contentDescription = "Selanjutnya",
+            contentDescription = "Next",
             modifier = Modifier.size(22.dp)
         )
     }

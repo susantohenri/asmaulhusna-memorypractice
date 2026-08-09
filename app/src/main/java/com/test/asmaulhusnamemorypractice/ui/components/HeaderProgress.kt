@@ -38,7 +38,7 @@ fun HeaderProgress(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Progress Hafalan",
+                text = "Practice Progress",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)

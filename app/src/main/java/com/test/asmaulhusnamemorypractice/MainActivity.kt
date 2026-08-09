@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.ads.MobileAds
-import com.test.asmaulhusnamemorypractice.audio.TtsManager
 import com.test.asmaulhusnamemorypractice.ui.ad.AdMobBanner
 import com.test.asmaulhusnamemorypractice.ui.ad.InterstitialAdHelper
 import com.test.asmaulhusnamemorypractice.ui.components.AsmaulHusnaCard
@@ -30,7 +29,6 @@ import com.test.asmaulhusnamemorypractice.ui.viewmodel.MemoryPracticeViewModel
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var ttsManager: TtsManager
     private lateinit var interstitialAdHelper: InterstitialAdHelper
     private val viewModel: MemoryPracticeViewModel by viewModels()
 
@@ -42,8 +40,7 @@ class MainActivity : ComponentActivity() {
         // Initialize Google Mobile Ads SDK
         MobileAds.initialize(this) {}
 
-        // Initialize TTS Manager & Interstitial Ad Helper
-        ttsManager = TtsManager(this)
+        // Initialize Interstitial Ad Helper
         interstitialAdHelper = InterstitialAdHelper(this)
 
         setContent {
@@ -85,7 +82,7 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.RestartAlt,
-                                        contentDescription = "Reset ke Nomor 1"
+                                        contentDescription = "Reset to Number 1"
                                     )
                                 }
                             },
@@ -140,9 +137,6 @@ class MainActivity : ComponentActivity() {
                                                 interstitialAdHelper.showAd(activity)
                                             }
                                         )
-                                    },
-                                    onPlayAudio = { arabicText ->
-                                        ttsManager.speakArabic(arabicText)
                                     }
                                 )
                             }
@@ -185,10 +179,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        ttsManager.shutdown()
     }
 }
