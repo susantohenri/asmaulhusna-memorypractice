@@ -17,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.MobileAds
+import com.test.asmaulhusnamemorypractice.data.AdsManager
 import com.test.asmaulhusnamemorypractice.ui.ad.AdMobBanner
 import com.test.asmaulhusnamemorypractice.ui.ad.InterstitialAdHelper
 import com.test.asmaulhusnamemorypractice.ui.components.AsmaulHusnaCard
@@ -26,9 +28,11 @@ import com.test.asmaulhusnamemorypractice.ui.components.HeaderProgress
 import com.test.asmaulhusnamemorypractice.ui.components.NextButton
 import com.test.asmaulhusnamemorypractice.ui.theme.AsmaulHusnaMemoryPracticeTheme
 import com.test.asmaulhusnamemorypractice.ui.viewmodel.MemoryPracticeViewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var adsManager: AdsManager
     private lateinit var interstitialAdHelper: InterstitialAdHelper
     private val viewModel: MemoryPracticeViewModel by viewModels()
 
@@ -40,12 +44,26 @@ class MainActivity : ComponentActivity() {
         // Initialize Google Mobile Ads SDK
         MobileAds.initialize(this) {}
 
-        // Initialize Interstitial Ad Helper
+        // Initialize AdsManager & Interstitial Ad Helper
+        adsManager = AdsManager(this)
         interstitialAdHelper = InterstitialAdHelper(this)
+
+        // Fetch remote config on launch
+        lifecycleScope.launch {
+            adsManager.fetchAdsConfig()
+        }
+
+        // Observe the config state to update interstitial helper
+        lifecycleScope.launch {
+            adsManager.configState.collect { config ->
+                interstitialAdHelper.updateConfig(config)
+            }
+        }
 
         setContent {
             AsmaulHusnaMemoryPracticeTheme {
                 val uiState by viewModel.uiState.collectAsState()
+                val adsConfig by adsManager.configState.collectAsState()
                 val activity = this@MainActivity
 
                 Scaffold(
@@ -95,7 +113,7 @@ class MainActivity : ComponentActivity() {
                         // Static non-intrusive bottom banner ad with safe padding
                         Column {
                             Spacer(modifier = Modifier.height(16.dp)) // Safe distance from buttons
-                            AdMobBanner()
+                            AdMobBanner(adsConfig = adsConfig)
                         }
                     }
                 ) { innerPadding ->
