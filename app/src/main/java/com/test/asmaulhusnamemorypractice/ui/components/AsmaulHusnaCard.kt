@@ -150,7 +150,7 @@ fun AsmaulHusnaCard(
             }
 
             // Wisdom / Daily Quote pill badge at top-right
-            val badgeLabel = if (currentLanguage == AppLanguage.ID) "✨ Hikmah Harian" else "✨ Daily Wisdom"
+            val badgeLabel = "✨ ${strings.dailyWisdom}"
 
             Surface(
                 shape = RoundedCornerShape(50),
@@ -179,17 +179,13 @@ fun AsmaulHusnaCard(
 
             if (showQuote) {
                 val quoteToShow = if (currentLanguage == AppLanguage.ID) item.quoteId else item.quoteEn
-                val title = if (currentLanguage == AppLanguage.ID) "Hikmah Harian" else "Daily Wisdom"
-                val closeLabel = if (currentLanguage == AppLanguage.ID) "Tutup" else "Close"
-                val copyLabel = if (currentLanguage == AppLanguage.ID) "Salin" else "Copy"
-                val shareLabel = if (currentLanguage == AppLanguage.ID) "Bagikan" else "Share"
-
+                
                 QuoteDialog(
                     quote = quoteToShow,
-                    title = title,
-                    closeLabel = closeLabel,
-                    copyLabel = copyLabel,
-                    shareLabel = shareLabel,
+                    title = strings.dailyWisdom,
+                    closeLabel = strings.close,
+                    copyLabel = strings.copy,
+                    shareLabel = strings.share,
                     onDismiss = { showQuote = false },
                     context = context
                 )
@@ -208,6 +204,7 @@ fun QuoteDialog(
     onDismiss: () -> Unit,
     context: Context
 ) {
+    val strings = LocalAppStrings.current
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -228,7 +225,7 @@ fun QuoteDialog(
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("quote", quote)
                         clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, if (closeLabel == "Tutup") "Disalin ke clipboard" else "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, strings.copiedToClipboard, Toast.LENGTH_SHORT).show()
                     }) {
                         Text(text = copyLabel)
                     }

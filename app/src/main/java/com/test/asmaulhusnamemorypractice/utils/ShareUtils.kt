@@ -24,6 +24,8 @@ object ShareUtils {
         activity: Activity,
         width: Int = 1080,
         height: Int = 1920,
+        shareText: String = "",
+        chooserTitle: String = "Share",
         content: @Composable () -> Unit
     ) {
         val composeView = ComposeView(activity).apply {
@@ -60,7 +62,7 @@ object ShareUtils {
                 rootGroup.removeView(hiddenLayout)
 
                 // Share Bitmap
-                shareBitmap(activity, bitmap)
+                shareBitmap(activity, bitmap, shareText, chooserTitle)
             } catch (e: Exception) {
                 e.printStackTrace()
                 rootGroup.removeView(hiddenLayout)
@@ -68,7 +70,7 @@ object ShareUtils {
         }, 300) // 300ms delay to allow Compose rendering
     }
 
-    private fun shareBitmap(context: Context, bitmap: Bitmap) {
+    private fun shareBitmap(context: Context, bitmap: Bitmap, shareText: String, chooserTitle: String) {
         try {
             val cachePath = File(context.cacheDir, "shared_images")
             cachePath.mkdirs()
@@ -86,11 +88,13 @@ object ShareUtils {
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/png"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_TEXT, "Saya baru saja menyelesaikan latihan hafalan Asmaul Husna! 🤲")
+                if (shareText.isNotEmpty()) {
+                    putExtra(Intent.EXTRA_TEXT, shareText)
+                }
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            context.startActivity(Intent.createChooser(shareIntent, "Bagikan Progres"))
+            context.startActivity(Intent.createChooser(shareIntent, chooserTitle))
         } catch (e: Exception) {
             e.printStackTrace()
         }

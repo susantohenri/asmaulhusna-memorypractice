@@ -64,7 +64,7 @@ fun SettingsScreen(
                 title = { Text(text = strings.settings, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -100,21 +100,21 @@ fun SettingsScreen(
                             onClick = { onLanguageChange(AppLanguage.AUTO) },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
                         ) {
-                            Text(text = "Auto")
+                            Text(text = strings.auto)
                         }
                         SegmentedButton(
                             selected = currentLanguage == AppLanguage.EN,
                             onClick = { onLanguageChange(AppLanguage.EN) },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
                         ) {
-                            Text(text = "EN")
+                            Text(text = strings.english)
                         }
                         SegmentedButton(
                             selected = currentLanguage == AppLanguage.ID,
                             onClick = { onLanguageChange(AppLanguage.ID) },
                             shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
                         ) {
-                            Text(text = "ID")
+                            Text(text = strings.indonesian)
                         }
                     }
 
@@ -131,7 +131,7 @@ fun SettingsScreen(
                             onClick = { onThemeChange(AppTheme.AUTO) },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
                         ) {
-                            Text(text = "Auto")
+                            Text(text = strings.auto)
                         }
                         SegmentedButton(
                             selected = currentTheme == AppTheme.LIGHT,
@@ -160,9 +160,9 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(text = "Pengingat Latihan Harian", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            Text(text = strings.dailyReminder, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                             val timeStr = String.format(Locale.getDefault(), "%02d:%02d", reminderHour, reminderMinute)
-                            Text(text = "Setiap hari pukul $timeStr", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(text = strings.everyDayAt.format(timeStr), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Switch(
                             checked = reminderEnabled,
@@ -176,7 +176,7 @@ fun SettingsScreen(
                     }
                     if (reminderEnabled) {
                         TextButton(onClick = { timePickerDialog.show() }, modifier = Modifier.align(Alignment.End)) {
-                            Text("Ubah Waktu")
+                            Text(strings.changeTime)
                         }
                     }
                 }
@@ -218,7 +218,7 @@ fun SettingsScreen(
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://tokiocv.blogspot.com/2026/07/privacy-policy.html"))
                                 context.startActivity(intent)
                             } catch (e: ActivityNotFoundException) {
-                                Toast.makeText(context, "No browser found", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, strings.noBrowserFound, Toast.LENGTH_SHORT).show()
                             }
                         }
                     )
@@ -246,6 +246,7 @@ fun SettingsItemRow(
     title: String,
     onClick: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -259,7 +260,7 @@ fun SettingsItemRow(
             Text(text = title, fontSize = 16.sp, fontWeight = FontWeight.Medium)
         }
         TextButton(onClick = onClick) {
-            Text("Open")
+            Text(strings.open)
         }
     }
 }

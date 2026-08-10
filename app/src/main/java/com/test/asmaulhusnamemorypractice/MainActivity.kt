@@ -367,7 +367,11 @@ class MainActivity : ComponentActivity() {
                                             Text("${uiState.currentIndex + 1} / ${uiState.totalCount} ${strings.nameLabel}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                         }
                                         IconButton(onClick = {
-                                            com.test.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(activity) {
+                                            com.test.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(
+                                                activity = activity,
+                                                shareText = strings.shareProgressText,
+                                                chooserTitle = strings.shareChooserTitle
+                                            ) {
                                                 com.test.asmaulhusnamemorypractice.ui.components.ShareProgressLayout(
                                                     item = uiState.currentItem,
                                                     currentIndex = uiState.currentIndex,

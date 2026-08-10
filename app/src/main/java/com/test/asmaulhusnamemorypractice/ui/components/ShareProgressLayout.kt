@@ -23,6 +23,7 @@ fun ShareProgressLayout(
     totalCount: Int,
     currentLanguage: AppLanguage
 ) {
+    val strings = com.test.asmaulhusnamemorypractice.ui.theme.LocalAppStrings.current
     AsmaulHusnaMemoryPracticeTheme(darkTheme = false) {
         Column(
             modifier = Modifier
@@ -36,7 +37,7 @@ fun ShareProgressLayout(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "Saya sudah menghafal ${currentIndex + 1} dari $totalCount Asmaul Husna! 🤲",
+                text = strings.shareImageProgressText.format(currentIndex + 1, totalCount),
                 fontSize = 54.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -58,7 +59,7 @@ fun ShareProgressLayout(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "Asmaul Husna: Memory Practice",
+                text = strings.appName + ": " + strings.memoryPractice,
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary

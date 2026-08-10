@@ -57,7 +57,7 @@ fun QuizScreen(
                 onShare = {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, "Saya baru saja menyelesaikan Kuis Asmaul Husna dengan skor ${uiState.score}/${uiState.totalQuestions}! 🤲")
+                        putExtra(Intent.EXTRA_TEXT, strings.shareQuizText.format(uiState.score, uiState.totalQuestions))
                     }
                     context.startActivity(Intent.createChooser(shareIntent, strings.quizShareResult))
                 }
@@ -85,7 +85,7 @@ fun QuizScreen(
                 
                 // Question Header
                 Text(
-                    text = currentQuestion.questionText(currentLanguage),
+                    text = currentQuestion.questionText(strings),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -261,22 +261,10 @@ fun SequenceQuizContent(
     }
 }
 
-private fun QuizQuestion.questionText(language: AppLanguage): String = when (this) {
-    is QuizQuestion.NextNameQuiz -> if (language == AppLanguage.ID) {
-        "Apa nama setelah ${currentItem.latin}?"
-    } else {
-        "What comes after ${currentItem.latin}?"
-    }
-    is QuizQuestion.MeaningQuiz -> if (language == AppLanguage.ID) {
-        "Apa arti dari ${item.latin}?"
-    } else {
-        "What is the meaning of ${item.latin}?"
-    }
-    is QuizQuestion.SequenceQuiz -> if (language == AppLanguage.ID) {
-        "Ketuk nama-nama berikut dalam urutan yang benar"
-    } else {
-        "Tap the names in the correct sequence"
-    }
+private fun QuizQuestion.questionText(strings: com.test.asmaulhusnamemorypractice.ui.theme.AppStrings): String = when (this) {
+    is QuizQuestion.NextNameQuiz -> strings.quizNextNameQuestion.format(currentItem.latin)
+    is QuizQuestion.MeaningQuiz -> strings.quizMeaningQuestion.format(item.latin)
+    is QuizQuestion.SequenceQuiz -> strings.quizSequenceQuestion
 }
 
 private fun AsmaulHusna.meaning(language: AppLanguage): String =
@@ -322,9 +310,9 @@ fun ScoreSummaryCard(
             Spacer(modifier = Modifier.height(16.dp))
             
             val message = when {
-                score == total -> "Perfect! Mashallah! 🌟"
-                score >= total / 2 -> "Good job! Keep practicing! 👍"
-                else -> "Don't give up! Let's try again. 💪"
+                score == total -> strings.quizPerfect
+                score >= total / 2 -> strings.quizGood
+                else -> strings.quizTryHarder
             }
             
             Text(
