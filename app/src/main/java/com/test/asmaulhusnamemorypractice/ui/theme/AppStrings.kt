@@ -12,6 +12,8 @@ data class AppStrings(
     val practiceProgress: String,
     val tapCardToContinue: String,
     val completedTitle: String,
+    val previous: String,
+    val reset: String,
     val next: String,
     
     // Completion Dialog
@@ -45,6 +47,8 @@ val EnglishStrings = AppStrings(
     practiceProgress = "Practice Progress",
     tapCardToContinue = "Tap card to continue →",
     completedTitle = "Completed ✓",
+    previous = "Previous",
+    reset = "Reset",
     next = "Next",
     
     victoryTrophy = "Victory Trophy",
@@ -76,6 +80,8 @@ val IndonesianStrings = AppStrings(
     practiceProgress = "Progress Hafalan",
     tapCardToContinue = "Ketuk kartu untuk lanjut →",
     completedTitle = "Selesai ✓",
+    previous = "Sebelumnya",
+    reset = "Reset",
     next = "Lanjut",
     
     victoryTrophy = "Piala Kemenangan",

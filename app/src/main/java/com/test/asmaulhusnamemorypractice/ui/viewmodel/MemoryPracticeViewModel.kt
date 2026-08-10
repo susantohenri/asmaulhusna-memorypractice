@@ -52,6 +52,24 @@ class MemoryPracticeViewModel : ViewModel() {
     }
 
     /**
+     * Go to the previous Asmaul Husna.
+     */
+    fun onPrevious() {
+        _uiState.update { currentState ->
+            if (currentState.currentIndex > 0) {
+                val prevIdx = currentState.currentIndex - 1
+                currentState.copy(
+                    currentIndex = prevIdx,
+                    currentItem = AsmaulHusnaRepository.items[prevIdx],
+                    isCompleted = false
+                )
+            } else {
+                currentState
+            }
+        }
+    }
+
+    /**
      * Reset back to #1 (Ar-Rahman).
      */
     fun onReset(onResetTriggered: () -> Unit = {}) {

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -151,28 +150,10 @@ class MainActivity : ComponentActivity() {
                                             }
                                         },
                                         actions = {
-                                            // Settings Button
                                             IconButton(onClick = { navController.navigate("settings") }) {
                                                 Icon(
                                                     imageVector = Icons.Default.Settings,
                                                     contentDescription = strings.settings
-                                                )
-                                            }
-                                            // Reset Button
-                                            FilledTonalIconButton(
-                                                onClick = {
-                                                    interstitialAdHelper.showAd(activity) {
-                                                        viewModel.onReset()
-                                                    }
-                                                },
-                                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                                )
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.RestartAlt,
-                                                    contentDescription = strings.resetToFirst
                                                 )
                                             }
                                         },
@@ -234,6 +215,14 @@ class MainActivity : ComponentActivity() {
                                             NextButton(
                                                 currentIndex = uiState.currentIndex,
                                                 totalCount = uiState.totalCount,
+                                                onPrevious = {
+                                                    viewModel.onPrevious()
+                                                },
+                                                onReset = {
+                                                    interstitialAdHelper.showAd(activity) {
+                                                        viewModel.onReset()
+                                                    }
+                                                },
                                                 onNext = {
                                                     viewModel.onNext(
                                                         onRoundFinished = {
