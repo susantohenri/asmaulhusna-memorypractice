@@ -16,6 +16,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.test.asmaulhusnamemorypractice.model.AsmaulHusna
+import com.test.asmaulhusnamemorypractice.data.AppLanguage
+import com.test.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
 
 /**
  * Main practice card. Tap anywhere on the card = NEXT.
@@ -24,9 +26,11 @@ import com.test.asmaulhusnamemorypractice.model.AsmaulHusna
 @Composable
 fun AsmaulHusnaCard(
     item: AsmaulHusna,
+    currentLanguage: AppLanguage,
     onCardTap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -105,13 +109,13 @@ fun AsmaulHusnaCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // English Meaning — always visible
+            // Meaning — dynamic based on language
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Text(
-                    text = item.meaningEn,
+                    text = if (currentLanguage == AppLanguage.ID) item.meaningId else item.meaningEn,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -124,7 +128,7 @@ fun AsmaulHusnaCard(
 
             // Hint text
             Text(
-                text = "Tap card to continue →",
+                text = strings.tapCardToContinue,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
                 fontWeight = FontWeight.Medium

@@ -15,12 +15,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.test.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
 
 @Composable
 fun CompletionDialog(
     onRestart: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(28.dp),
@@ -44,7 +46,7 @@ fun CompletionDialog(
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.EmojiEvents,
-                            contentDescription = "Victory Trophy",
+                            contentDescription = strings.victoryTrophy,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(44.dp)
                         )
@@ -54,7 +56,7 @@ fun CompletionDialog(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = "Congratulations!",
+                    text = strings.congratulations,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.primary
@@ -63,7 +65,7 @@ fun CompletionDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "You have completed the 99 Asmaul Husna practice!",
+                    text = strings.completionMessage,
                     fontSize = 15.sp,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
@@ -83,11 +85,11 @@ fun CompletionDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Restart Practice"
+                        contentDescription = strings.startOver
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Start Over",
+                        text = strings.startOver,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -100,7 +102,7 @@ fun CompletionDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Close",
+                        text = strings.close,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )

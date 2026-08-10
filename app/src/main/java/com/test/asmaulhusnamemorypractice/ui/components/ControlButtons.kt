@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.test.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
 
 /**
  * Single large "Next" button below the card.
@@ -23,6 +24,7 @@ fun NextButton(
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     Button(
         onClick = onNext,
         modifier = modifier
@@ -36,7 +38,7 @@ fun NextButton(
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
     ) {
         Text(
-            text = if (currentIndex >= totalCount - 1) "Completed ✓" else "Next",
+            text = if (currentIndex >= totalCount - 1) strings.completedTitle else strings.next,
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold
         )

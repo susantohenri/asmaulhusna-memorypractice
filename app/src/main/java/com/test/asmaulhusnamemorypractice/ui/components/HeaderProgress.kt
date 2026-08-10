@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.test.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
 
 @Composable
 fun HeaderProgress(
@@ -26,6 +27,7 @@ fun HeaderProgress(
         animationSpec = tween(durationMillis = 350),
         label = "ProgressAnimation"
     )
+    val strings = LocalAppStrings.current
 
     Column(
         modifier = modifier
@@ -38,7 +40,7 @@ fun HeaderProgress(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Practice Progress",
+                text = strings.practiceProgress,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
