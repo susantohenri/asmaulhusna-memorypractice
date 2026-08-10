@@ -3,6 +3,7 @@ package com.test.asmaulhusnamemorypractice
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -12,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -99,8 +101,11 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val languageState by appPreferences.languageState.collectAsState()
-            val themeState by appPreferences.themeState.collectAsState()
+            val languageState by appPreferences.languageFlow.collectAsState(initial = AppLanguage.AUTO)
+            val themeState by appPreferences.themeFlow.collectAsState(initial = AppTheme.AUTO)
+            val reminderEnabled by appPreferences.reminderEnabledFlow.collectAsState(initial = false)
+            val reminderHour by appPreferences.reminderHourFlow.collectAsState(initial = 20)
+            val reminderMinute by appPreferences.reminderMinuteFlow.collectAsState(initial = 0)
             
             val systemInDarkTheme = isSystemInDarkTheme()
             val useDarkTheme = when (themeState) {
@@ -119,12 +124,30 @@ class MainActivity : ComponentActivity() {
 
             val appStrings = if (currentLanguage == AppLanguage.ID) IndonesianStrings else EnglishStrings
 
+            // Permission Launcher for Android 13+ Notifications
+            val requestPermissionLauncher = rememberLauncherForActivityResult(
+                androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (isGranted) {
+                    lifecycleScope.launch { appPreferences.setReminderEnabled(true) }
+                    com.test.asmaulhusnamemorypractice.utils.ReminderManager.scheduleDailyReminder(
+                        this@MainActivity, reminderHour, reminderMinute
+                    )
+                } else {
+                    lifecycleScope.launch { appPreferences.setReminderEnabled(false) }
+                }
+            }
+
             CompositionLocalProvider(LocalAppStrings provides appStrings) {
                 AsmaulHusnaMemoryPracticeTheme(darkTheme = useDarkTheme) {
                     val navController = rememberNavController()
                     
                     NavHost(navController = navController, startDestination = "practice") {
                         composable("practice") {
+                            // Inject ViewModel with AppPreferences
+                            val viewModel: MemoryPracticeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                                factory = MemoryPracticeViewModel.Factory(appPreferences)
+                            )
                             val uiState by viewModel.uiState.collectAsState()
                             val adsConfig by adsManager.configState.collectAsState()
                             val activity = this@MainActivity
@@ -209,9 +232,42 @@ class MainActivity : ComponentActivity() {
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(vertical = 16.dp),
+                                                .padding(vertical = 16.dp)
+                                                .padding(horizontal = 24.dp),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
+                                            // Progres Hafalan Share Card
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column {
+                                                        Text("Progres Hafalan", fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.7f))
+                                                        Text("${uiState.currentIndex + 1} / ${uiState.totalCount} Nama", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                                    }
+                                                    IconButton(onClick = {
+                                                        com.test.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(activity) {
+                                                            com.test.asmaulhusnamemorypractice.ui.components.ShareProgressLayout(
+                                                                item = uiState.currentItem,
+                                                                currentIndex = uiState.currentIndex,
+                                                                totalCount = uiState.totalCount,
+                                                                currentLanguage = currentLanguage
+                                                            )
+                                                        }
+                                                    }) {
+                                                        Icon(Icons.Default.Share, contentDescription = "Share Progress", tint = MaterialTheme.colorScheme.primary)
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            
                                             NextButton(
                                                 currentIndex = uiState.currentIndex,
                                                 totalCount = uiState.totalCount,
@@ -253,8 +309,36 @@ class MainActivity : ComponentActivity() {
                             SettingsScreen(
                                 currentLanguage = languageState,
                                 currentTheme = themeState,
-                                onLanguageChange = { appPreferences.setLanguage(it) },
-                                onThemeChange = { appPreferences.setTheme(it) },
+                                reminderEnabled = reminderEnabled,
+                                reminderHour = reminderHour,
+                                reminderMinute = reminderMinute,
+                                onLanguageChange = { lifecycleScope.launch { appPreferences.setLanguage(it) } },
+                                onThemeChange = { lifecycleScope.launch { appPreferences.setTheme(it) } },
+                                onReminderToggle = { enabled ->
+                                    if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                                                this@MainActivity, android.Manifest.permission.POST_NOTIFICATIONS
+                                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                                            lifecycleScope.launch { appPreferences.setReminderEnabled(true) }
+                                            com.test.asmaulhusnamemorypractice.utils.ReminderManager.scheduleDailyReminder(this@MainActivity, reminderHour, reminderMinute)
+                                        } else {
+                                            requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                        }
+                                    } else {
+                                        lifecycleScope.launch { appPreferences.setReminderEnabled(enabled) }
+                                        if (enabled) {
+                                            com.test.asmaulhusnamemorypractice.utils.ReminderManager.scheduleDailyReminder(this@MainActivity, reminderHour, reminderMinute)
+                                        } else {
+                                            com.test.asmaulhusnamemorypractice.utils.ReminderManager.cancelReminder(this@MainActivity)
+                                        }
+                                    }
+                                },
+                                onReminderTimeChange = { h, m ->
+                                    lifecycleScope.launch { appPreferences.setReminderTime(h, m) }
+                                    if (reminderEnabled) {
+                                        com.test.asmaulhusnamemorypractice.utils.ReminderManager.scheduleDailyReminder(this@MainActivity, h, m)
+                                    }
+                                },
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }

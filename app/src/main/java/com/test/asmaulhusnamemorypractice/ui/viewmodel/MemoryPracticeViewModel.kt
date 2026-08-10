@@ -1,18 +1,20 @@
 package com.test.asmaulhusnamemorypractice.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.test.asmaulhusnamemorypractice.data.AppPreferences
 import com.test.asmaulhusnamemorypractice.data.AsmaulHusnaRepository
 import com.test.asmaulhusnamemorypractice.model.AsmaulHusna
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /**
  * UI State for the Asmaul Husna Memory Practice screen.
- *
- * This is a sequential active recall trainer — meanings are always visible.
- * Tapping the card or pressing Next advances to the next name.
  */
 data class MemoryPracticeUiState(
     val currentIndex: Int = 0,
@@ -27,19 +29,36 @@ data class MemoryPracticeUiState(
         get() = "${currentIndex + 1} / $totalCount"
 }
 
-class MemoryPracticeViewModel : ViewModel() {
+class MemoryPracticeViewModel(private val appPreferences: AppPreferences) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MemoryPracticeUiState())
     val uiState: StateFlow<MemoryPracticeUiState> = _uiState.asStateFlow()
 
-    /**
-     * Advance to the next Asmaul Husna.
-     * When reaching the end (#99), mark as completed and invoke callback.
-     */
+    init {
+        viewModelScope.launch {
+            val lastIndex = appPreferences.lastPracticedIndexFlow.first()
+            if (lastIndex in 0 until AsmaulHusnaRepository.items.size) {
+                _uiState.update {
+                    it.copy(
+                        currentIndex = lastIndex,
+                        currentItem = AsmaulHusnaRepository.items[lastIndex]
+                    )
+                }
+            }
+        }
+    }
+
+    private fun saveIndex(index: Int) {
+        viewModelScope.launch {
+            appPreferences.setLastPracticedIndex(index)
+        }
+    }
+
     fun onNext(onRoundFinished: () -> Unit = {}) {
         _uiState.update { currentState ->
             if (currentState.currentIndex < currentState.totalCount - 1) {
                 val nextIdx = currentState.currentIndex + 1
+                saveIndex(nextIdx)
                 currentState.copy(
                     currentIndex = nextIdx,
                     currentItem = AsmaulHusnaRepository.items[nextIdx]
@@ -51,13 +70,11 @@ class MemoryPracticeViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Go to the previous Asmaul Husna.
-     */
     fun onPrevious() {
         _uiState.update { currentState ->
             if (currentState.currentIndex > 0) {
                 val prevIdx = currentState.currentIndex - 1
+                saveIndex(prevIdx)
                 currentState.copy(
                     currentIndex = prevIdx,
                     currentItem = AsmaulHusnaRepository.items[prevIdx],
@@ -69,11 +86,9 @@ class MemoryPracticeViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Reset back to #1 (Ar-Rahman).
-     */
     fun onReset(onResetTriggered: () -> Unit = {}) {
         onResetTriggered()
+        saveIndex(0)
         _uiState.update {
             it.copy(
                 currentIndex = 0,
@@ -85,5 +100,15 @@ class MemoryPracticeViewModel : ViewModel() {
 
     fun dismissCompletionDialog() {
         _uiState.update { it.copy(isCompleted = false) }
+    }
+
+    class Factory(private val appPreferences: AppPreferences) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(MemoryPracticeViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return MemoryPracticeViewModel(appPreferences) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
     }
 }

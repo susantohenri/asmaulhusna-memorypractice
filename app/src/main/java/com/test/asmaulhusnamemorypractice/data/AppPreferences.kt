@@ -1,10 +1,17 @@
 package com.test.asmaulhusnamemorypractice.data
 
 import android.content.Context
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 enum class AppLanguage {
     AUTO, // Detect from OS
@@ -18,29 +25,50 @@ enum class AppTheme {
     DARK   // Dark Mode
 }
 
-class AppPreferences(context: Context) {
-    private val sharedPrefs = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+class AppPreferences(private val context: Context) {
 
-    private val KEY_LANGUAGE = "language_pref"
-    private val KEY_THEME = "theme_pref"
+    private val KEY_LANGUAGE = stringPreferencesKey("language_pref")
+    private val KEY_THEME = stringPreferencesKey("theme_pref")
+    private val KEY_REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
+    private val KEY_REMINDER_HOUR = intPreferencesKey("reminder_hour")
+    private val KEY_REMINDER_MINUTE = intPreferencesKey("reminder_minute")
+    private val KEY_LAST_INDEX = intPreferencesKey("last_practiced_index")
 
-    private val _languageState = MutableStateFlow(
-        AppLanguage.valueOf(sharedPrefs.getString(KEY_LANGUAGE, AppLanguage.AUTO.name) ?: AppLanguage.AUTO.name)
-    )
-    val languageState: StateFlow<AppLanguage> = _languageState.asStateFlow()
-
-    private val _themeState = MutableStateFlow(
-        AppTheme.valueOf(sharedPrefs.getString(KEY_THEME, AppTheme.AUTO.name) ?: AppTheme.AUTO.name)
-    )
-    val themeState: StateFlow<AppTheme> = _themeState.asStateFlow()
-
-    fun setLanguage(language: AppLanguage) {
-        sharedPrefs.edit().putString(KEY_LANGUAGE, language.name).apply()
-        _languageState.update { language }
+    val languageFlow: Flow<AppLanguage> = context.dataStore.data.map { prefs ->
+        val langName = prefs[KEY_LANGUAGE] ?: AppLanguage.AUTO.name
+        try { AppLanguage.valueOf(langName) } catch (e: Exception) { AppLanguage.AUTO }
     }
 
-    fun setTheme(theme: AppTheme) {
-        sharedPrefs.edit().putString(KEY_THEME, theme.name).apply()
-        _themeState.update { theme }
+    val themeFlow: Flow<AppTheme> = context.dataStore.data.map { prefs ->
+        val themeName = prefs[KEY_THEME] ?: AppTheme.AUTO.name
+        try { AppTheme.valueOf(themeName) } catch (e: Exception) { AppTheme.AUTO }
+    }
+
+    val reminderEnabledFlow: Flow<Boolean> = context.dataStore.data.map { it[KEY_REMINDER_ENABLED] ?: false }
+    val reminderHourFlow: Flow<Int> = context.dataStore.data.map { it[KEY_REMINDER_HOUR] ?: 20 }
+    val reminderMinuteFlow: Flow<Int> = context.dataStore.data.map { it[KEY_REMINDER_MINUTE] ?: 0 }
+    val lastPracticedIndexFlow: Flow<Int> = context.dataStore.data.map { it[KEY_LAST_INDEX] ?: 0 }
+
+    suspend fun setLanguage(language: AppLanguage) {
+        context.dataStore.edit { it[KEY_LANGUAGE] = language.name }
+    }
+
+    suspend fun setTheme(theme: AppTheme) {
+        context.dataStore.edit { it[KEY_THEME] = theme.name }
+    }
+
+    suspend fun setReminderEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_REMINDER_ENABLED] = enabled }
+    }
+
+    suspend fun setReminderTime(hour: Int, minute: Int) {
+        context.dataStore.edit {
+            it[KEY_REMINDER_HOUR] = hour
+            it[KEY_REMINDER_MINUTE] = minute
+        }
+    }
+
+    suspend fun setLastPracticedIndex(index: Int) {
+        context.dataStore.edit { it[KEY_LAST_INDEX] = index }
     }
 }

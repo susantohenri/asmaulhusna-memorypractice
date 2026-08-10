@@ -24,17 +24,39 @@ import com.test.asmaulhusnamemorypractice.data.AppLanguage
 import com.test.asmaulhusnamemorypractice.data.AppTheme
 import com.test.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
 
+import android.app.TimePickerDialog
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import java.util.Locale
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     currentLanguage: AppLanguage,
     currentTheme: AppTheme,
+    reminderEnabled: Boolean,
+    reminderHour: Int,
+    reminderMinute: Int,
     onLanguageChange: (AppLanguage) -> Unit,
     onThemeChange: (AppTheme) -> Unit,
+    onReminderToggle: (Boolean) -> Unit,
+    onReminderTimeChange: (Int, Int) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val strings = LocalAppStrings.current
     val context = LocalContext.current
+
+    val timePickerDialog = TimePickerDialog(
+        context,
+        { _, hourOfDay, minute ->
+            onReminderTimeChange(hourOfDay, minute)
+        },
+        reminderHour,
+        reminderMinute,
+        true
+    )
 
     Scaffold(
         topBar = {
@@ -124,6 +146,37 @@ fun SettingsScreen(
                             shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
                         ) {
                             Text(text = strings.dark)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Daily Reminder
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(text = "Pengingat Latihan Harian", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                            val timeStr = String.format(Locale.getDefault(), "%02d:%02d", reminderHour, reminderMinute)
+                            Text(text = "Setiap hari pukul $timeStr", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Switch(
+                            checked = reminderEnabled,
+                            onCheckedChange = { 
+                                onReminderToggle(it)
+                                if (it) {
+                                    timePickerDialog.show()
+                                }
+                            }
+                        )
+                    }
+                    if (reminderEnabled) {
+                        TextButton(onClick = { timePickerDialog.show() }, modifier = Modifier.align(Alignment.End)) {
+                            Text("Ubah Waktu")
                         }
                     }
                 }
