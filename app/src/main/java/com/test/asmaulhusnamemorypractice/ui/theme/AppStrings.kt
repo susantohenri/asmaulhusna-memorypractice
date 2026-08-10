@@ -35,8 +35,20 @@ data class AppStrings(
     val dark: String,
     val legalAndInformation: String,
     val privacyPolicy: String,
+    val version: String,
     val aboutApp: String,
-    val version: String
+    
+    // Bottom Nav Tabs
+    val tabPractice: String,
+    val tabExplore: String,
+    val tabQuiz: String,
+    
+    // Quiz Screen
+    val quizQuestion: String,
+    val quizOf: String,
+    val quizScore: String,
+    val quizTryAgain: String,
+    val quizShareResult: String
 )
 
 val EnglishStrings = AppStrings(
@@ -69,7 +81,17 @@ val EnglishStrings = AppStrings(
     legalAndInformation = "Legal & Information",
     privacyPolicy = "Privacy Policy",
     aboutApp = "About App",
-    version = "Version"
+    version = "Version",
+    
+    tabPractice = "Practice",
+    tabExplore = "Explore",
+    tabQuiz = "Quiz",
+    
+    quizQuestion = "Question",
+    quizOf = "of",
+    quizScore = "Final Score",
+    quizTryAgain = "Try Again",
+    quizShareResult = "Share Result"
 )
 
 val IndonesianStrings = AppStrings(
@@ -102,7 +124,17 @@ val IndonesianStrings = AppStrings(
     legalAndInformation = "Legal & Informasi",
     privacyPolicy = "Kebijakan Privasi",
     aboutApp = "Tentang Aplikasi",
-    version = "Versi"
+    version = "Versi",
+    
+    tabPractice = "Latihan",
+    tabExplore = "Jelajahi",
+    tabQuiz = "Kuis",
+    
+    quizQuestion = "Pertanyaan",
+    quizOf = "dari",
+    quizScore = "Skor Akhir",
+    quizTryAgain = "Coba Lagi",
+    quizShareResult = "Bagikan Hasil"
 )
 
 val LocalAppStrings = compositionLocalOf { EnglishStrings }

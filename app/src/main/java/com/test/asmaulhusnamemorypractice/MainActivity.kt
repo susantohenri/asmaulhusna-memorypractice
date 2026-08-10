@@ -1,5 +1,6 @@
 package com.test.asmaulhusnamemorypractice
 
+import android.app.Activity
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -12,8 +13,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
 import com.google.android.ump.ConsentRequestParameters
@@ -38,12 +43,15 @@ import com.test.asmaulhusnamemorypractice.ui.components.AsmaulHusnaCard
 import com.test.asmaulhusnamemorypractice.ui.components.CompletionDialog
 import com.test.asmaulhusnamemorypractice.ui.components.HeaderProgress
 import com.test.asmaulhusnamemorypractice.ui.components.NextButton
+import com.test.asmaulhusnamemorypractice.ui.screens.ExploreScreen
+import com.test.asmaulhusnamemorypractice.ui.screens.QuizScreen
 import com.test.asmaulhusnamemorypractice.ui.screens.SettingsScreen
 import com.test.asmaulhusnamemorypractice.ui.theme.AsmaulHusnaMemoryPracticeTheme
 import com.test.asmaulhusnamemorypractice.ui.theme.EnglishStrings
 import com.test.asmaulhusnamemorypractice.ui.theme.IndonesianStrings
 import com.test.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
 import com.test.asmaulhusnamemorypractice.ui.viewmodel.MemoryPracticeViewModel
+import com.test.asmaulhusnamemorypractice.ui.viewmodel.QuizViewModel
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.Locale
@@ -140,171 +148,19 @@ class MainActivity : ComponentActivity() {
 
             CompositionLocalProvider(LocalAppStrings provides appStrings) {
                 AsmaulHusnaMemoryPracticeTheme(darkTheme = useDarkTheme) {
-                    val navController = rememberNavController()
+                    val rootNavController = rememberNavController()
                     
-                    NavHost(navController = navController, startDestination = "practice") {
-                        composable("practice") {
-                            // Inject ViewModel with AppPreferences
-                            val viewModel: MemoryPracticeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-                                factory = MemoryPracticeViewModel.Factory(appPreferences)
+                    NavHost(navController = rootNavController, startDestination = "main") {
+                        composable("main") {
+                            MainScreen(
+                                rootNavController = rootNavController,
+                                appPreferences = appPreferences,
+                                adsManager = adsManager,
+                                interstitialAdHelper = interstitialAdHelper,
+                                currentLanguage = currentLanguage,
+                                activity = this@MainActivity
                             )
-                            val uiState by viewModel.uiState.collectAsState()
-                            val adsConfig by adsManager.configState.collectAsState()
-                            val activity = this@MainActivity
-                            val strings = LocalAppStrings.current
-
-                            Scaffold(
-                                modifier = Modifier.fillMaxSize(),
-                                topBar = {
-                                    TopAppBar(
-                                        title = {
-                                            Column {
-                                                Text(
-                                                    text = strings.appName,
-                                                    fontSize = 20.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = strings.memoryPractice,
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Normal,
-                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                                )
-                                            }
-                                        },
-                                        actions = {
-                                            IconButton(onClick = { navController.navigate("settings") }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Settings,
-                                                    contentDescription = strings.settings
-                                                )
-                                            }
-                                        },
-                                        colors = TopAppBarDefaults.topAppBarColors(
-                                            containerColor = MaterialTheme.colorScheme.surface
-                                        )
-                                    )
-                                },
-                                bottomBar = {
-                                    Column {
-                                        Spacer(modifier = Modifier.height(16.dp))
-                                        AdMobBanner(adsConfig = adsConfig)
-                                    }
-                                }
-                            ) { innerPadding ->
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(innerPadding),
-                                    color = MaterialTheme.colorScheme.background
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .verticalScroll(rememberScrollState()),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            HeaderProgress(
-                                                currentIndex = uiState.currentIndex,
-                                                totalCount = uiState.totalCount,
-                                                progress = uiState.progress
-                                            )
-                                            Spacer(modifier = Modifier.height(12.dp))
-                                            AsmaulHusnaCard(
-                                                item = uiState.currentItem,
-                                                currentLanguage = currentLanguage,
-                                                onCardTap = {
-                                                    viewModel.onNext(
-                                                        onRoundFinished = {
-                                                            interstitialAdHelper.showAd(activity)
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                        }
-
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 16.dp)
-                                                .padding(horizontal = 24.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            // Progres Hafalan Share Card
-                                            Card(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Column {
-                                                        Text("Progres Hafalan", fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.7f))
-                                                        Text("${uiState.currentIndex + 1} / ${uiState.totalCount} Nama", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                                    }
-                                                    IconButton(onClick = {
-                                                        com.test.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(activity) {
-                                                            com.test.asmaulhusnamemorypractice.ui.components.ShareProgressLayout(
-                                                                item = uiState.currentItem,
-                                                                currentIndex = uiState.currentIndex,
-                                                                totalCount = uiState.totalCount,
-                                                                currentLanguage = currentLanguage
-                                                            )
-                                                        }
-                                                    }) {
-                                                        Icon(Icons.Default.Share, contentDescription = "Share Progress", tint = MaterialTheme.colorScheme.primary)
-                                                    }
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.height(16.dp))
-                                            
-                                            NextButton(
-                                                currentIndex = uiState.currentIndex,
-                                                totalCount = uiState.totalCount,
-                                                onPrevious = {
-                                                    viewModel.onPrevious()
-                                                },
-                                                onReset = {
-                                                    interstitialAdHelper.showAd(activity) {
-                                                        viewModel.onReset()
-                                                    }
-                                                },
-                                                onNext = {
-                                                    viewModel.onNext(
-                                                        onRoundFinished = {
-                                                            interstitialAdHelper.showAd(activity)
-                                                        }
-                                                    )
-                                                }
-                                            )
-                                            Spacer(modifier = Modifier.height(16.dp))
-                                        }
-                                    }
-
-                                    if (uiState.isCompleted) {
-                                        CompletionDialog(
-                                            onRestart = {
-                                                interstitialAdHelper.showAd(activity) {
-                                                    viewModel.onReset()
-                                                }
-                                            },
-                                            onDismiss = { viewModel.dismissCompletionDialog() }
-                                        )
-                                    }
-                                }
-                            }
                         }
-                        
                         composable("settings") {
                             SettingsScreen(
                                 currentLanguage = languageState,
@@ -339,10 +195,241 @@ class MainActivity : ComponentActivity() {
                                         com.test.asmaulhusnamemorypractice.utils.ReminderManager.scheduleDailyReminder(this@MainActivity, h, m)
                                     }
                                 },
-                                onNavigateBack = { navController.popBackStack() }
+                                onNavigateBack = { rootNavController.popBackStack() }
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun MainScreen(
+        rootNavController: androidx.navigation.NavController,
+        appPreferences: AppPreferences,
+        adsManager: AdsManager,
+        interstitialAdHelper: InterstitialAdHelper,
+        currentLanguage: AppLanguage,
+        activity: Activity
+    ) {
+        val bottomNavController = rememberNavController()
+        val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+        val strings = LocalAppStrings.current
+        val adsConfig by adsManager.configState.collectAsState()
+
+        // Inject ViewModel with AppPreferences
+        val viewModel: MemoryPracticeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+            factory = MemoryPracticeViewModel.Factory(appPreferences)
+        )
+
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text = strings.appName,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = strings.memoryPractice,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { rootNavController.navigate("settings") }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = strings.settings
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+            },
+            bottomBar = {
+                Column {
+                    NavigationBar {
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Star, contentDescription = strings.tabPractice) },
+                            label = { Text(strings.tabPractice) },
+                            selected = currentRoute == "practice",
+                            onClick = {
+                                bottomNavController.navigate("practice") {
+                                    popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.List, contentDescription = strings.tabExplore) },
+                            label = { Text(strings.tabExplore) },
+                            selected = currentRoute == "explore",
+                            onClick = {
+                                bottomNavController.navigate("explore") {
+                                    popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.PlayArrow, contentDescription = strings.tabQuiz) },
+                            label = { Text(strings.tabQuiz) },
+                            selected = currentRoute == "quiz",
+                            onClick = {
+                                bottomNavController.navigate("quiz") {
+                                    popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+                    }
+                    AdMobBanner(adsConfig = adsConfig)
+                }
+            }
+        ) { innerPadding ->
+            NavHost(
+                navController = bottomNavController,
+                startDestination = "practice",
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable("practice") {
+                    val uiState by viewModel.uiState.collectAsState()
+
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                HeaderProgress(
+                                    currentIndex = uiState.currentIndex,
+                                    totalCount = uiState.totalCount,
+                                    progress = uiState.progress
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                AsmaulHusnaCard(
+                                    item = uiState.currentItem,
+                                    currentLanguage = currentLanguage,
+                                    onCardTap = {
+                                        viewModel.onNext(
+                                            onRoundFinished = {
+                                                interstitialAdHelper.showAd(activity)
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp)
+                                    .padding(horizontal = 24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                // Progres Hafalan Share Card
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text("Progres Hafalan", fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.7f))
+                                            Text("${uiState.currentIndex + 1} / ${uiState.totalCount} Nama", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                        }
+                                        IconButton(onClick = {
+                                            com.test.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(activity) {
+                                                com.test.asmaulhusnamemorypractice.ui.components.ShareProgressLayout(
+                                                    item = uiState.currentItem,
+                                                    currentIndex = uiState.currentIndex,
+                                                    totalCount = uiState.totalCount,
+                                                    currentLanguage = currentLanguage
+                                                )
+                                            }
+                                        }) {
+                                            Icon(Icons.Default.Share, contentDescription = "Share Progress", tint = MaterialTheme.colorScheme.primary)
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                NextButton(
+                                    currentIndex = uiState.currentIndex,
+                                    totalCount = uiState.totalCount,
+                                    onPrevious = {
+                                        viewModel.onPrevious()
+                                    },
+                                    onReset = {
+                                        interstitialAdHelper.showAd(activity) {
+                                            viewModel.onReset()
+                                        }
+                                    },
+                                    onNext = {
+                                        viewModel.onNext(
+                                            onRoundFinished = {
+                                                interstitialAdHelper.showAd(activity)
+                                            }
+                                        )
+                                    }
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
+
+                        if (uiState.isCompleted) {
+                            CompletionDialog(
+                                onRestart = {
+                                    interstitialAdHelper.showAd(activity) {
+                                        viewModel.onReset()
+                                    }
+                                },
+                                onDismiss = { viewModel.dismissCompletionDialog() }
+                            )
+                        }
+                    }
+                }
+                composable("explore") {
+                    ExploreScreen()
+                }
+                composable("quiz") {
+                    val quizViewModel: QuizViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    QuizScreen(
+                        viewModel = quizViewModel,
+                        currentLanguage = currentLanguage,
+                        onQuizFinished = {
+                            interstitialAdHelper.showAd(activity)
+                        }
+                    )
                 }
             }
         }
