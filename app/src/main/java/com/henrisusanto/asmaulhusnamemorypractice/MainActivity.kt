@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         // Initialize Managers
-        adsManager = AdsManager(this)
+        adsManager = AdsManager()
         appPreferences = AppPreferences(this)
         interstitialAdHelper = InterstitialAdHelper(this)
 

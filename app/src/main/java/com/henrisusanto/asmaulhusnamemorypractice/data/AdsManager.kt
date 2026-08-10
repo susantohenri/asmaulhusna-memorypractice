@@ -1,6 +1,5 @@
 package com.henrisusanto.asmaulhusnamemorypractice.data
 
-import android.content.Context
 import android.util.Log
 import com.henrisusanto.asmaulhusnamemorypractice.model.AdsConfig
 import kotlinx.coroutines.Dispatchers
@@ -12,23 +11,14 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
 
-class AdsManager(context: Context) {
+class AdsManager() {
 
     companion object {
         private const val TAG = "AdsManager"
-        private const val PREFS_NAME = "AdsConfigPrefs"
-        private const val KEY_APP_OPEN = "appOpenAdUnitId"
-        private const val KEY_BANNER = "bannerAdUnitId"
-        private const val KEY_INTERSTITIAL = "interstitialAdUnitId"
-        private const val KEY_REWARDED = "rewardedAdUnitId"
-        private const val KEY_NATIVE = "nativeAdUnitId"
-        private const val KEY_IS_ADS_ENABLED = "isAdsEnabled"
         private const val REMOTE_URL = "https://raw.githubusercontent.com/susantohenri/admob-remote-configs/refs/heads/main/asmaulhusna-memorypractice/ads_config.json"
     }
 
-    private val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    
-    private val _configState = MutableStateFlow(loadCachedConfig())
+    private val _configState = MutableStateFlow(AdsConfig(isAdsEnabled = false))
     val configState: StateFlow<AdsConfig> = _configState.asStateFlow()
 
     suspend fun fetchAdsConfig() {
@@ -44,39 +34,16 @@ class AdsManager(context: Context) {
                     interstitialAdUnitId = json.optString("interstitialAdUnitId", "ca-app-pub-3940256099942544/1033173712"),
                     rewardedAdUnitId = json.optString("rewardedAdUnitId", ""),
                     nativeAdUnitId = json.optString("nativeAdUnitId", ""),
-                    isAdsEnabled = json.optBoolean("isAdsEnabled", true)
+                    isAdsEnabled = json.optBoolean("isAdsEnabled", false)
                 )
 
-                saveConfigToCache(newConfig)
                 _configState.update { newConfig }
                 
                 Log.d(TAG, "Ads Config updated successfully: $newConfig")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to fetch Ads Config, using cached or default: ${e.message}")
+                Log.e(TAG, "Failed to fetch Ads Config, using default (disabled): ${e.message}")
+                _configState.update { AdsConfig(isAdsEnabled = false) }
             }
         }
-    }
-
-    private fun saveConfigToCache(config: AdsConfig) {
-        sharedPrefs.edit().apply {
-            putString(KEY_APP_OPEN, config.appOpenAdUnitId)
-            putString(KEY_BANNER, config.bannerAdUnitId)
-            putString(KEY_INTERSTITIAL, config.interstitialAdUnitId)
-            putString(KEY_REWARDED, config.rewardedAdUnitId)
-            putString(KEY_NATIVE, config.nativeAdUnitId)
-            putBoolean(KEY_IS_ADS_ENABLED, config.isAdsEnabled)
-            apply()
-        }
-    }
-
-    private fun loadCachedConfig(): AdsConfig {
-        return AdsConfig(
-            appOpenAdUnitId = sharedPrefs.getString(KEY_APP_OPEN, "") ?: "",
-            bannerAdUnitId = sharedPrefs.getString(KEY_BANNER, "ca-app-pub-3940256099942544/6300978111") ?: "ca-app-pub-3940256099942544/6300978111",
-            interstitialAdUnitId = sharedPrefs.getString(KEY_INTERSTITIAL, "ca-app-pub-3940256099942544/1033173712") ?: "ca-app-pub-3940256099942544/1033173712",
-            rewardedAdUnitId = sharedPrefs.getString(KEY_REWARDED, "") ?: "",
-            nativeAdUnitId = sharedPrefs.getString(KEY_NATIVE, "") ?: "",
-            isAdsEnabled = sharedPrefs.getBoolean(KEY_IS_ADS_ENABLED, true)
-        )
     }
 }
