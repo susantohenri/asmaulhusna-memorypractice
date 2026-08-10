@@ -8,5 +8,7 @@ data class AsmaulHusna(
     val arabic: String,
     val latin: String,
     val meaningId: String,
-    val meaningEn: String
+    val meaningEn: String,
+    val quoteId: String,
+    val quoteEn: String
 )
