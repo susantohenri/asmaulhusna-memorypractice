@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.test.asmaulhusnamemorypractice"
+    namespace = "com.henrisusanto.asmaulhusnamemorypractice"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.test.asmaulhusnamemorypractice"
+        applicationId = "com.henrisusanto.asmaulhusnamemorypractice"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
