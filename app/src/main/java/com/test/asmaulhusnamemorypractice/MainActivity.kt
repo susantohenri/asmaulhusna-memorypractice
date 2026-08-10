@@ -363,8 +363,8 @@ class MainActivity : ComponentActivity() {
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column {
-                                            Text("Progres Hafalan", fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.7f))
-                                            Text("${uiState.currentIndex + 1} / ${uiState.totalCount} Nama", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                            Text(strings.progressCardTitle, fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.7f))
+                                            Text("${uiState.currentIndex + 1} / ${uiState.totalCount} ${strings.nameLabel}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                         }
                                         IconButton(onClick = {
                                             com.test.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(activity) {

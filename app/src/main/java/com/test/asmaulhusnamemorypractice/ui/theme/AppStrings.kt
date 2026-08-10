@@ -10,6 +10,8 @@ data class AppStrings(
     
     // Practice Screen
     val practiceProgress: String,
+    val progressCardTitle: String,
+    val nameLabel: String,
     val tapCardToContinue: String,
     val completedTitle: String,
     val previous: String,
@@ -57,6 +59,8 @@ val EnglishStrings = AppStrings(
     resetToFirst = "Reset to Number 1",
     
     practiceProgress = "Practice Progress",
+    progressCardTitle = "Practice Progress",
+    nameLabel = "Name",
     tapCardToContinue = "Tap card to continue →",
     completedTitle = "Completed ✓",
     previous = "Previous",
@@ -100,6 +104,8 @@ val IndonesianStrings = AppStrings(
     resetToFirst = "Ulang ke Nomor 1",
     
     practiceProgress = "Progress Hafalan",
+    progressCardTitle = "Progress Hafalan",
+    nameLabel = "Nama",
     tapCardToContinue = "Ketuk kartu untuk lanjut →",
     completedTitle = "Selesai ✓",
     previous = "Sebelumnya",
