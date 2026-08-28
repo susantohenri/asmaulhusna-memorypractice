@@ -17,10 +17,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AsmaulHusnaMemoryPractice">
 
-        <!-- AdMob Sample Application ID for testing -->
+        <!-- AdMob Application ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-1012224604632017~4983688732"/>
 
         <activity
             android:name=".MainActivity"

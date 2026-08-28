@@ -27,7 +27,7 @@ fun AdMobBanner(
     modifier: Modifier = Modifier,
     adsConfig: AdsConfig
 ) {
-    if (!adsConfig.isAdsEnabled) return
+    if (!adsConfig.isAdsEnabled || adsConfig.bannerAdUnitId.isEmpty()) return
 
     Box(
         modifier = modifier

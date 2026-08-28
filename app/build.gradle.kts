@@ -50,6 +50,8 @@ dependencies {
     implementation("com.google.android.ump:user-messaging-platform:3.0.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    // Force upgrade fragment to fix Google Play Console warning about 1.1.0
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)

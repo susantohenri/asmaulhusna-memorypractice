@@ -30,8 +30,8 @@ class AdsManager() {
 
                 val newConfig = AdsConfig(
                     appOpenAdUnitId = json.optString("appOpenAdUnitId", ""),
-                    bannerAdUnitId = json.optString("bannerAdUnitId", "ca-app-pub-3940256099942544/6300978111"),
-                    interstitialAdUnitId = json.optString("interstitialAdUnitId", "ca-app-pub-3940256099942544/1033173712"),
+                    bannerAdUnitId = json.optString("bannerAdUnitId", ""),
+                    interstitialAdUnitId = json.optString("interstitialAdUnitId", ""),
                     rewardedAdUnitId = json.optString("rewardedAdUnitId", ""),
                     nativeAdUnitId = json.optString("nativeAdUnitId", ""),
                     isAdsEnabled = json.optBoolean("isAdsEnabled", false)
