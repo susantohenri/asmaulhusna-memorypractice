@@ -215,7 +215,7 @@ fun SettingsScreen(
                         title = strings.privacyPolicy,
                         onClick = {
                             try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://tokiocv.blogspot.com/2026/07/privacy-policy.html"))
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://susantohenri.github.io/privacy-policy"))
                                 context.startActivity(intent)
                             } catch (e: ActivityNotFoundException) {
                                 Toast.makeText(context, strings.noBrowserFound, Toast.LENGTH_SHORT).show()
