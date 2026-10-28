@@ -14,8 +14,8 @@ android {
         applicationId = "com.henrisusanto.asmaulhusnamemorypractice"
         minSdk = 24
         targetSdk = 37
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -61,6 +61,8 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     // Force upgrade fragment to fix Google Play Console warning about 1.1.0
     implementation("androidx.fragment:fragment-ktx:1.8.5")
+    // Force upgrade work-runtime to ensure Android 14+ compatibility and fix WorkDatabase R8 issues
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)

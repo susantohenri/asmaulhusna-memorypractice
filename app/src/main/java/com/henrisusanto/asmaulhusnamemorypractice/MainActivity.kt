@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
@@ -61,7 +61,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var adsManager: AdsManager
     private lateinit var appPreferences: AppPreferences
     private lateinit var interstitialAdHelper: InterstitialAdHelper
-    private val viewModel: MemoryPracticeViewModel by viewModels()
     private val isMobileAdsInitializeCalled = AtomicBoolean(false)
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -273,7 +272,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                         NavigationBarItem(
-                            icon = { Icon(Icons.Default.List, contentDescription = strings.tabExplore) },
+                            icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = strings.tabExplore) },
                             label = { Text(strings.tabExplore) },
                             selected = currentRoute == "explore",
                             onClick = {

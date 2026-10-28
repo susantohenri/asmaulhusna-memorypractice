@@ -17,3 +17,27 @@
 
 # Kotlin Coroutines
 -dontwarn kotlinx.coroutines.**
+
+# AndroidX Startup Initializers
+-keep class androidx.startup.** { *; }
+-keep class * extends androidx.startup.Initializer {
+    <init>();
+}
+
+# AndroidX WorkManager & Room (required for AdMob offline / background signal collection)
+-keep class * extends androidx.room.RoomDatabase {
+    <init>();
+}
+-keep class androidx.work.impl.WorkDatabase_Impl {
+    <init>();
+}
+-keep class androidx.work.impl.WorkDatabase {
+    *;
+}
+-keep class androidx.work.** { *; }
+-keep class androidx.room.** { *; }
+
+# Firebase Component Registrars & SDK
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
