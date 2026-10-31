@@ -46,8 +46,9 @@ class AdsManager(
         )
         remoteConfig.setDefaultsAsync(defaultMap)
 
+        val fetchInterval = if (com.henrisusanto.asmaulhusnamemorypractice.BuildConfig.DEBUG) 0L else 3600L
         val configSettings = FirebaseRemoteConfigSettings.Builder()
-            .setMinimumFetchIntervalInSeconds(3600)
+            .setMinimumFetchIntervalInSeconds(fetchInterval)
             .build()
         remoteConfig.setConfigSettingsAsync(configSettings)
 
