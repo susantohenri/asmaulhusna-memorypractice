@@ -14,11 +14,19 @@ object AnalyticsLogger {
 
     private const val TAG = "AnalyticsLogger"
 
+    // Canonical Ad Formats
+    const val AD_FORMAT_BANNER = "BANNER"
+    const val AD_FORMAT_INTERSTITIAL = "INTERSTITIAL"
+    const val AD_FORMAT_REWARDED = "REWARDED"
+
     @Volatile
     private var firebaseAnalytics: FirebaseAnalytics? = null
 
     @Volatile
     private var lastScreenName: String? = null
+
+    val currentScreen: String
+        get() = synchronized(this) { lastScreenName ?: "main" }
 
     /**
      * Initializes FirebaseAnalytics with the Application Context.
@@ -130,5 +138,64 @@ object AnalyticsLogger {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to write Crashlytics log: ${e.message}", e)
         }
+    }
+
+    /**
+     * Logs ad_request precisely before loading an ad.
+     */
+    fun logAdRequest(adUnitId: String, adFormat: String, screen: String = currentScreen) {
+        val bundle = Bundle().apply {
+            putString("ad_unit_id", adUnitId)
+            putString("ad_format", adFormat)
+            putString("screen", screen)
+        }
+        logEvent("ad_request", bundle)
+    }
+
+    /**
+     * Logs ad_impression via OnPaidEventListener as the canonical single source.
+     */
+    fun logAdImpression(
+        adUnitId: String,
+        adFormat: String,
+        adSource: String?,
+        screen: String = currentScreen,
+        currency: String?,
+        value: Double
+    ) {
+        val bundle = Bundle().apply {
+            putString("ad_unit_id", adUnitId)
+            putString("ad_format", adFormat)
+            putString("ad_source", adSource ?: "unknown")
+            putString("screen", screen)
+            putString("currency", currency ?: "USD")
+            putDouble("value", value)
+        }
+        logEvent("ad_impression", bundle)
+    }
+
+    /**
+     * Logs ad_click when an ad is clicked.
+     */
+    fun logAdClick(adUnitId: String, adFormat: String, screen: String = currentScreen) {
+        val bundle = Bundle().apply {
+            putString("ad_unit_id", adUnitId)
+            putString("ad_format", adFormat)
+            putString("screen", screen)
+        }
+        logEvent("ad_click", bundle)
+    }
+
+    /**
+     * Logs ad_failed when ad loading fails.
+     */
+    fun logAdFailed(adUnitId: String, adFormat: String, errorCode: Int, screen: String = currentScreen) {
+        val bundle = Bundle().apply {
+            putString("ad_unit_id", adUnitId)
+            putString("ad_format", adFormat)
+            putInt("error_code", errorCode)
+            putString("screen", screen)
+        }
+        logEvent("ad_failed", bundle)
     }
 }

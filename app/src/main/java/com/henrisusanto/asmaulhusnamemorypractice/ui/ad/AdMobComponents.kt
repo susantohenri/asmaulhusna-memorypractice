@@ -12,15 +12,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.henrisusanto.asmaulhusnamemorypractice.analytics.AnalyticsLogger
 import com.henrisusanto.asmaulhusnamemorypractice.model.AdsConfig
 
 /**
@@ -44,6 +47,46 @@ fun AdMobBanner(
                 AdView(context).apply {
                     setAdSize(AdSize.BANNER)
                     this.adUnitId = adsConfig.bannerAdUnitId
+
+                    onPaidEventListener = OnPaidEventListener { adValue ->
+                        val value = adValue.valueMicros / 1_000_000.0
+                        val currency = adValue.currencyCode
+                        val adSource = responseInfo?.loadedAdapterResponseInfo?.adSourceName
+                            ?: responseInfo?.mediationAdapterClassName
+                            ?: "AdMob"
+                        AnalyticsLogger.logAdImpression(
+                            adUnitId = adsConfig.bannerAdUnitId,
+                            adFormat = AnalyticsLogger.AD_FORMAT_BANNER,
+                            adSource = adSource,
+                            currency = currency,
+                            value = value
+                        )
+                    }
+
+                    adListener = object : AdListener() {
+                        override fun onAdClicked() {
+                            super.onAdClicked()
+                            AnalyticsLogger.logAdClick(
+                                adUnitId = adsConfig.bannerAdUnitId,
+                                adFormat = AnalyticsLogger.AD_FORMAT_BANNER
+                            )
+                        }
+
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            super.onAdFailedToLoad(error)
+                            AnalyticsLogger.logAdFailed(
+                                adUnitId = adsConfig.bannerAdUnitId,
+                                adFormat = AnalyticsLogger.AD_FORMAT_BANNER,
+                                errorCode = error.code
+                            )
+                        }
+                    }
+
+                    AnalyticsLogger.logAdRequest(
+                        adUnitId = adsConfig.bannerAdUnitId,
+                        adFormat = AnalyticsLogger.AD_FORMAT_BANNER
+                    )
+
                     val adRequest = AdRequest.Builder().build()
                     loadAd(adRequest)
                 }
@@ -60,6 +103,7 @@ class InterstitialAdHelper(private val context: Context) {
 
     private var interstitialAd: InterstitialAd? = null
     private var currentConfig: AdsConfig? = null
+    private var currentShowingScreen: String = "main"
 
     fun updateConfig(config: AdsConfig) {
         currentConfig = config
@@ -74,6 +118,11 @@ class InterstitialAdHelper(private val context: Context) {
         val config = currentConfig ?: return
         if (!config.isAdsEnabled || config.interstitialAdUnitId.isEmpty()) return
 
+        AnalyticsLogger.logAdRequest(
+            adUnitId = config.interstitialAdUnitId,
+            adFormat = AnalyticsLogger.AD_FORMAT_INTERSTITIAL
+        )
+
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(
             context,
@@ -81,6 +130,22 @@ class InterstitialAdHelper(private val context: Context) {
             adRequest,
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
+                    ad.onPaidEventListener = OnPaidEventListener { adValue ->
+                        val value = adValue.valueMicros / 1_000_000.0
+                        val currency = adValue.currencyCode
+                        val adSource = ad.responseInfo.loadedAdapterResponseInfo?.adSourceName
+                            ?: ad.responseInfo.mediationAdapterClassName
+                            ?: "AdMob"
+                        AnalyticsLogger.logAdImpression(
+                            adUnitId = config.interstitialAdUnitId,
+                            adFormat = AnalyticsLogger.AD_FORMAT_INTERSTITIAL,
+                            adSource = adSource,
+                            screen = currentShowingScreen,
+                            currency = currency,
+                            value = value
+                        )
+                    }
+
                     interstitialAd = ad
                     Log.d("AdMobHelper", "Interstitial Ad loaded successfully")
                 }
@@ -88,6 +153,11 @@ class InterstitialAdHelper(private val context: Context) {
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     interstitialAd = null
                     Log.e("AdMobHelper", "Failed to load Interstitial Ad: ${error.message}")
+                    AnalyticsLogger.logAdFailed(
+                        adUnitId = config.interstitialAdUnitId,
+                        adFormat = AnalyticsLogger.AD_FORMAT_INTERSTITIAL,
+                        errorCode = error.code
+                    )
                 }
             }
         )
@@ -101,9 +171,19 @@ class InterstitialAdHelper(private val context: Context) {
             return
         }
 
+        currentShowingScreen = AnalyticsLogger.currentScreen
+
         if (interstitialAd != null) {
             // Set callback to ensure onDismiss is called when the ad is closed
             interstitialAd?.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+                override fun onAdClicked() {
+                    AnalyticsLogger.logAdClick(
+                        adUnitId = config.interstitialAdUnitId,
+                        adFormat = AnalyticsLogger.AD_FORMAT_INTERSTITIAL,
+                        screen = currentShowingScreen
+                    )
+                }
+
                 override fun onAdDismissedFullScreenContent() {
                     interstitialAd = null // Reload for next time
                     loadAd()
@@ -132,6 +212,7 @@ class RewardedAdHelper(private val context: Context) {
     private var rewardedAd: RewardedAd? = null
     private var currentConfig: AdsConfig? = null
     private var isLoading = false
+    private var currentShowingScreen: String = "main"
 
     fun updateConfig(config: AdsConfig) {
         currentConfig = config
@@ -147,6 +228,12 @@ class RewardedAdHelper(private val context: Context) {
         if (!config.isAdsEnabled || config.rewardedAdUnitId.isEmpty() || isLoading) return
 
         isLoading = true
+
+        AnalyticsLogger.logAdRequest(
+            adUnitId = config.rewardedAdUnitId,
+            adFormat = AnalyticsLogger.AD_FORMAT_REWARDED
+        )
+
         val adRequest = AdRequest.Builder().build()
         RewardedAd.load(
             context,
@@ -155,6 +242,22 @@ class RewardedAdHelper(private val context: Context) {
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
                     isLoading = false
+                    ad.onPaidEventListener = OnPaidEventListener { adValue ->
+                        val value = adValue.valueMicros / 1_000_000.0
+                        val currency = adValue.currencyCode
+                        val adSource = ad.responseInfo.loadedAdapterResponseInfo?.adSourceName
+                            ?: ad.responseInfo.mediationAdapterClassName
+                            ?: "AdMob"
+                        AnalyticsLogger.logAdImpression(
+                            adUnitId = config.rewardedAdUnitId,
+                            adFormat = AnalyticsLogger.AD_FORMAT_REWARDED,
+                            adSource = adSource,
+                            screen = currentShowingScreen,
+                            currency = currency,
+                            value = value
+                        )
+                    }
+
                     rewardedAd = ad
                     Log.d("RewardedAdHelper", "Rewarded Ad loaded successfully")
                 }
@@ -163,6 +266,11 @@ class RewardedAdHelper(private val context: Context) {
                     isLoading = false
                     rewardedAd = null
                     Log.e("RewardedAdHelper", "Failed to load Rewarded Ad: ${error.message}")
+                    AnalyticsLogger.logAdFailed(
+                        adUnitId = config.rewardedAdUnitId,
+                        adFormat = AnalyticsLogger.AD_FORMAT_REWARDED,
+                        errorCode = error.code
+                    )
                 }
             }
         )
@@ -185,10 +293,20 @@ class RewardedAdHelper(private val context: Context) {
             return
         }
 
+        currentShowingScreen = AnalyticsLogger.currentScreen
+
         val ad = rewardedAd
         if (ad != null) {
             var earnedReward = false
             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdClicked() {
+                    AnalyticsLogger.logAdClick(
+                        adUnitId = config.rewardedAdUnitId,
+                        adFormat = AnalyticsLogger.AD_FORMAT_REWARDED,
+                        screen = currentShowingScreen
+                    )
+                }
+
                 override fun onAdDismissedFullScreenContent() {
                     rewardedAd = null
                     loadAd()
