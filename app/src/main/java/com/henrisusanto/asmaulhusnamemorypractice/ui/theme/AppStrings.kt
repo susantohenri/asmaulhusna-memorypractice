@@ -77,7 +77,26 @@ data class AppStrings(
     val dailyWisdom: String,
     val copy: String,
     val share: String,
-    val copiedToClipboard: String
+    val copiedToClipboard: String,
+
+    // Certificate
+    val claimCertificate: String,
+    val certificateTitle: String,
+    val certificateSubtitle: String,
+    val certificateAwardedTo: String,
+    val certificateDescription: String,
+    val certificateHadithArabic: String,
+    val certificateHadithTranslation: String,
+    val certificateDate: String,
+    val certificateIssuer: String,
+    val certificateOfficialStamp: String,
+    val certificateEnterNameTitle: String,
+    val certificateEnterNameDesc: String,
+    val certificateNameHint: String,
+    val certificateWatchVideoAction: String,
+    val certificateShareText: String,
+    val certificateGenerating: String,
+    val certificateAdNotReady: String
 )
 
 val EnglishStrings = AppStrings(
@@ -146,7 +165,25 @@ val EnglishStrings = AppStrings(
     dailyWisdom = "Daily Wisdom",
     copy = "Copy",
     share = "Share",
-    copiedToClipboard = "Copied to clipboard"
+    copiedToClipboard = "Copied to clipboard",
+
+    claimCertificate = "Claim Digital Certificate",
+    certificateTitle = "CERTIFICATE OF COMPLETION",
+    certificateSubtitle = "Memorization of 99 Asmaul Husna",
+    certificateAwardedTo = "This certificate is proudly awarded to:",
+    certificateDescription = "For successfully studying, reflecting upon, and completing the memorization of all 99 beautiful names of Allah (Asmaul Husna) via the Asmaul Husna Memory Practice app.",
+    certificateHadithArabic = "إِنَّ لِلَّهِ تِسْعَةً وَتِسْعِينَ اسْمًا، مِائَةً إِلاَّ وَاحِدًا، مَنْ أَحْصَاهَا دَخَلَ الْجَنَّةَ",
+    certificateHadithTranslation = "\"Verily, Allah has ninety-nine names, one hundred minus one; whoever memorizes them will enter Paradise.\" (Sahih Bukhari)",
+    certificateDate = "Date: %s",
+    certificateIssuer = "Asmaul Husna Memory Practice",
+    certificateOfficialStamp = "OFFICIAL • VERIFIED",
+    certificateEnterNameTitle = "Claim Digital Certificate",
+    certificateEnterNameDesc = "Enter your full name to appear on your certificate. Watch a short video to generate and download your official certificate.",
+    certificateNameHint = "Your Full Name",
+    certificateWatchVideoAction = "Watch Video & Download Certificate",
+    certificateShareText = "Alhamdulillah! I have memorized all 99 names of Allah (Asmaul Husna) and received my Certificate of Completion! 📜✨",
+    certificateGenerating = "Preparing your certificate...",
+    certificateAdNotReady = "Ad video is preparing. Please try again in a few moments."
 )
 
 val IndonesianStrings = AppStrings(
@@ -215,7 +252,25 @@ val IndonesianStrings = AppStrings(
     dailyWisdom = "Hikmah Harian",
     copy = "Salin",
     share = "Bagikan",
-    copiedToClipboard = "Disalin ke papan klip"
+    copiedToClipboard = "Disalin ke papan klip",
+
+    claimCertificate = "Klaim Sertifikat Kelulusan",
+    certificateTitle = "SERTIFIKAT KELULUSAN",
+    certificateSubtitle = "Hafalan 99 Asmaul Husna",
+    certificateAwardedTo = "Sertifikat ini dengan bangga diberikan kepada:",
+    certificateDescription = "Atas keberhasilannya dalam mempelajari, menghayati, dan menuntaskan hafalan 99 nama-nama agung Allah (Asmaul Husna) dengan baik melalui aplikasi Asmaul Husna Memory Practice.",
+    certificateHadithArabic = "إِنَّ لِلَّهِ تِسْعَةً وَتِسْعِينَ اسْمًا، مِائَةً إِلاَّ وَاحِدًا، مَنْ أَحْصَاهَا دَخَلَ الْجَنَّةَ",
+    certificateHadithTranslation = "\"Sesungguhnya Allah memiliki sembilan puluh sembilan nama, seratus kurang satu, barangsiapa yang menghafalnya maka ia akan masuk surga.\" (HR. Bukhari no. 2736)",
+    certificateDate = "Tanggal: %s",
+    certificateIssuer = "Asmaul Husna Memory Practice",
+    certificateOfficialStamp = "TERVERIFIKASI • RESMI",
+    certificateEnterNameTitle = "Unduh Sertifikat Kelulusan",
+    certificateEnterNameDesc = "Tuliskan nama Anda untuk dicantumkan pada sertifikat. Tonton video singkat untuk membuka dan mengunduh sertifikat resmi Anda.",
+    certificateNameHint = "Nama Lengkap Anda",
+    certificateWatchVideoAction = "Tonton Video & Dapatkan Sertifikat",
+    certificateShareText = "Alhamdulillah! Saya telah menuntaskan hafalan 99 Asmaul Husna dan meraih Sertifikat Kelulusan! 📜✨",
+    certificateGenerating = "Menyiapkan sertifikat kelulusan...",
+    certificateAdNotReady = "Iklan video sedang disiapkan. Silakan coba sesaat lagi."
 )
 
 val LocalAppStrings = compositionLocalOf { EnglishStrings }

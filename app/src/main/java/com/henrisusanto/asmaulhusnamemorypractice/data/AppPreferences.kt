@@ -33,6 +33,7 @@ class AppPreferences(private val context: Context) {
     private val KEY_REMINDER_HOUR = intPreferencesKey("reminder_hour")
     private val KEY_REMINDER_MINUTE = intPreferencesKey("reminder_minute")
     private val KEY_LAST_INDEX = intPreferencesKey("last_practiced_index")
+    private val KEY_USER_NAME = stringPreferencesKey("user_name_pref")
 
     val languageFlow: Flow<AppLanguage> = context.dataStore.data.map { prefs ->
         val langName = prefs[KEY_LANGUAGE] ?: AppLanguage.AUTO.name
@@ -48,6 +49,7 @@ class AppPreferences(private val context: Context) {
     val reminderHourFlow: Flow<Int> = context.dataStore.data.map { it[KEY_REMINDER_HOUR] ?: 20 }
     val reminderMinuteFlow: Flow<Int> = context.dataStore.data.map { it[KEY_REMINDER_MINUTE] ?: 0 }
     val lastPracticedIndexFlow: Flow<Int> = context.dataStore.data.map { it[KEY_LAST_INDEX] ?: 0 }
+    val userNameFlow: Flow<String> = context.dataStore.data.map { it[KEY_USER_NAME] ?: "" }
 
     suspend fun setLanguage(language: AppLanguage) {
         context.dataStore.edit { it[KEY_LANGUAGE] = language.name }
@@ -70,5 +72,9 @@ class AppPreferences(private val context: Context) {
 
     suspend fun setLastPracticedIndex(index: Int) {
         context.dataStore.edit { it[KEY_LAST_INDEX] = index }
+    }
+
+    suspend fun setUserName(name: String) {
+        context.dataStore.edit { it[KEY_USER_NAME] = name }
     }
 }

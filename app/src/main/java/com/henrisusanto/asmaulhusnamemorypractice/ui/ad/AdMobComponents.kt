@@ -11,12 +11,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.henrisusanto.asmaulhusnamemorypractice.model.AdsConfig
 
 /**
@@ -116,6 +120,98 @@ class InterstitialAdHelper(private val context: Context) {
             Log.d("AdMobHelper", "Interstitial Ad not ready yet")
             loadAd()
             onDismiss()
+        }
+    }
+}
+
+/**
+ * AdMob Rewarded Ad manager helper.
+ */
+class RewardedAdHelper(private val context: Context) {
+
+    private var rewardedAd: RewardedAd? = null
+    private var currentConfig: AdsConfig? = null
+    private var isLoading = false
+
+    fun updateConfig(config: AdsConfig) {
+        currentConfig = config
+        if (config.isAdsEnabled && rewardedAd == null && !isLoading) {
+            loadAd()
+        } else if (!config.isAdsEnabled) {
+            rewardedAd = null
+        }
+    }
+
+    fun loadAd() {
+        val config = currentConfig ?: return
+        if (!config.isAdsEnabled || config.rewardedAdUnitId.isEmpty() || isLoading) return
+
+        isLoading = true
+        val adRequest = AdRequest.Builder().build()
+        RewardedAd.load(
+            context,
+            config.rewardedAdUnitId,
+            adRequest,
+            object : RewardedAdLoadCallback() {
+                override fun onAdLoaded(ad: RewardedAd) {
+                    isLoading = false
+                    rewardedAd = ad
+                    Log.d("RewardedAdHelper", "Rewarded Ad loaded successfully")
+                }
+
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    isLoading = false
+                    rewardedAd = null
+                    Log.e("RewardedAdHelper", "Failed to load Rewarded Ad: ${error.message}")
+                }
+            }
+        )
+    }
+
+    val isAdLoaded: Boolean
+        get() = rewardedAd != null
+
+    fun showAd(
+        activity: Activity,
+        onUserEarnedReward: () -> Unit,
+        onAdNotReady: () -> Unit = {},
+        onAdClosed: () -> Unit = {}
+    ) {
+        val config = currentConfig
+        if (config == null || !config.isAdsEnabled || config.rewardedAdUnitId.isEmpty()) {
+            Log.d("RewardedAdHelper", "Ads disabled or no ad unit, granting reward directly")
+            onUserEarnedReward()
+            onAdClosed()
+            return
+        }
+
+        val ad = rewardedAd
+        if (ad != null) {
+            var earnedReward = false
+            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    rewardedAd = null
+                    loadAd()
+                    if (earnedReward) {
+                        onUserEarnedReward()
+                    }
+                    onAdClosed()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    rewardedAd = null
+                    loadAd()
+                    onAdClosed()
+                }
+            }
+            ad.show(activity) { _ ->
+                earnedReward = true
+            }
+        } else {
+            Log.d("RewardedAdHelper", "Rewarded Ad not ready yet")
+            loadAd()
+            onAdNotReady()
+            onAdClosed()
         }
     }
 }

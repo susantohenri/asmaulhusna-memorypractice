@@ -3,6 +3,7 @@ package com.henrisusanto.asmaulhusnamemorypractice
 import android.app.Activity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,9 +39,11 @@ import com.henrisusanto.asmaulhusnamemorypractice.data.AdsManager
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppLanguage
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppPreferences
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppTheme
-import com.henrisusanto.asmaulhusnamemorypractice.ui.ad.AdMobBanner
 import com.henrisusanto.asmaulhusnamemorypractice.ui.ad.InterstitialAdHelper
+import com.henrisusanto.asmaulhusnamemorypractice.ui.ad.RewardedAdHelper
 import com.henrisusanto.asmaulhusnamemorypractice.ui.components.AsmaulHusnaCard
+import com.henrisusanto.asmaulhusnamemorypractice.ui.components.CertificateInputDialog
+import com.henrisusanto.asmaulhusnamemorypractice.ui.components.CertificateLayout
 import com.henrisusanto.asmaulhusnamemorypractice.ui.components.CompletionDialog
 import com.henrisusanto.asmaulhusnamemorypractice.ui.components.HeaderProgress
 import com.henrisusanto.asmaulhusnamemorypractice.ui.components.NextButton
@@ -53,6 +57,8 @@ import com.henrisusanto.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
 import com.henrisusanto.asmaulhusnamemorypractice.ui.viewmodel.MemoryPracticeViewModel
 import com.henrisusanto.asmaulhusnamemorypractice.ui.viewmodel.QuizViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.Locale
 
@@ -61,6 +67,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var adsManager: AdsManager
     private lateinit var appPreferences: AppPreferences
     private lateinit var interstitialAdHelper: InterstitialAdHelper
+    private lateinit var rewardedAdHelper: RewardedAdHelper
     private val isMobileAdsInitializeCalled = AtomicBoolean(false)
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +79,7 @@ class MainActivity : ComponentActivity() {
         adsManager = AdsManager()
         appPreferences = AppPreferences(this)
         interstitialAdHelper = InterstitialAdHelper(this)
+        rewardedAdHelper = RewardedAdHelper(this)
 
         // Request UMP Consent
         val params = ConsentRequestParameters.Builder().build()
@@ -100,10 +108,11 @@ class MainActivity : ComponentActivity() {
             initializeMobileAdsSdk()
         }
 
-        // Observe the config state to update interstitial helper
+        // Observe the config state to update interstitial and rewarded helpers
         lifecycleScope.launch {
             adsManager.configState.collect { config ->
                 interstitialAdHelper.updateConfig(config)
+                rewardedAdHelper.updateConfig(config)
             }
         }
 
@@ -156,6 +165,7 @@ class MainActivity : ComponentActivity() {
                                 appPreferences = appPreferences,
                                 adsManager = adsManager,
                                 interstitialAdHelper = interstitialAdHelper,
+                                rewardedAdHelper = rewardedAdHelper,
                                 currentLanguage = currentLanguage,
                                 activity = this@MainActivity
                             )
@@ -210,6 +220,7 @@ class MainActivity : ComponentActivity() {
         appPreferences: AppPreferences,
         adsManager: AdsManager,
         interstitialAdHelper: InterstitialAdHelper,
+        rewardedAdHelper: RewardedAdHelper,
         currentLanguage: AppLanguage,
         activity: Activity
     ) {
@@ -217,7 +228,8 @@ class MainActivity : ComponentActivity() {
         val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         val strings = LocalAppStrings.current
-        val adsConfig by adsManager.configState.collectAsState()
+        val savedUserName by appPreferences.userNameFlow.collectAsState(initial = "")
+        var showCertificateNameDialog by remember { mutableStateOf(false) }
 
         // Inject ViewModel with AppPreferences
         val viewModel: MemoryPracticeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
@@ -257,46 +269,43 @@ class MainActivity : ComponentActivity() {
                 )
             },
             bottomBar = {
-                Column {
-                    NavigationBar {
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Default.Star, contentDescription = strings.tabPractice) },
-                            label = { Text(strings.tabPractice) },
-                            selected = currentRoute == "practice",
-                            onClick = {
-                                bottomNavController.navigate("practice") {
-                                    popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                NavigationBar {
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Star, contentDescription = strings.tabPractice) },
+                        label = { Text(strings.tabPractice) },
+                        selected = currentRoute == "practice",
+                        onClick = {
+                            bottomNavController.navigate("practice") {
+                                popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                        )
-                        NavigationBarItem(
-                            icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = strings.tabExplore) },
-                            label = { Text(strings.tabExplore) },
-                            selected = currentRoute == "explore",
-                            onClick = {
-                                bottomNavController.navigate("explore") {
-                                    popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                        }
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = strings.tabExplore) },
+                        label = { Text(strings.tabExplore) },
+                        selected = currentRoute == "explore",
+                        onClick = {
+                            bottomNavController.navigate("explore") {
+                                popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                        )
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Default.PlayArrow, contentDescription = strings.tabQuiz) },
-                            label = { Text(strings.tabQuiz) },
-                            selected = currentRoute == "quiz",
-                            onClick = {
-                                bottomNavController.navigate("quiz") {
-                                    popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                        }
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.PlayArrow, contentDescription = strings.tabQuiz) },
+                        label = { Text(strings.tabQuiz) },
+                        selected = currentRoute == "quiz",
+                        onClick = {
+                            bottomNavController.navigate("quiz") {
+                                popUpTo(bottomNavController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                        )
-                    }
-                    AdMobBanner(adsConfig = adsConfig)
+                        }
+                    )
                 }
             }
         ) { innerPadding ->
@@ -365,21 +374,32 @@ class MainActivity : ComponentActivity() {
                                             Text(strings.progressCardTitle, fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.7f))
                                             Text("${uiState.currentIndex + 1} / ${uiState.totalCount} ${strings.nameLabel}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                         }
-                                        IconButton(onClick = {
-                                            com.henrisusanto.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(
-                                                activity = activity,
-                                                shareText = strings.shareProgressText,
-                                                chooserTitle = strings.shareChooserTitle
-                                            ) {
-                                                com.henrisusanto.asmaulhusnamemorypractice.ui.components.ShareProgressLayout(
-                                                    item = uiState.currentItem,
-                                                    currentIndex = uiState.currentIndex,
-                                                    totalCount = uiState.totalCount,
-                                                    currentLanguage = currentLanguage
-                                                )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            if (uiState.currentIndex == uiState.totalCount - 1) {
+                                                IconButton(onClick = { showCertificateNameDialog = true }) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.WorkspacePremium,
+                                                        contentDescription = strings.claimCertificate,
+                                                        tint = MaterialTheme.colorScheme.primary
+                                                    )
+                                                }
                                             }
-                                        }) {
-                                            Icon(Icons.Default.Share, contentDescription = "Share Progress", tint = MaterialTheme.colorScheme.primary)
+                                            IconButton(onClick = {
+                                                com.henrisusanto.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(
+                                                    activity = activity,
+                                                    shareText = strings.shareProgressText,
+                                                    chooserTitle = strings.shareChooserTitle
+                                                ) {
+                                                    com.henrisusanto.asmaulhusnamemorypractice.ui.components.ShareProgressLayout(
+                                                        item = uiState.currentItem,
+                                                        currentIndex = uiState.currentIndex,
+                                                        totalCount = uiState.totalCount,
+                                                        currentLanguage = currentLanguage
+                                                    )
+                                                }
+                                            }) {
+                                                Icon(Icons.Default.Share, contentDescription = "Share Progress", tint = MaterialTheme.colorScheme.primary)
+                                            }
                                         }
                                     }
                                 }
@@ -416,7 +436,51 @@ class MainActivity : ComponentActivity() {
                                         viewModel.onReset()
                                     }
                                 },
-                                onDismiss = { viewModel.dismissCompletionDialog() }
+                                onDismiss = { viewModel.dismissCompletionDialog() },
+                                onClaimCertificate = {
+                                    showCertificateNameDialog = true
+                                }
+                            )
+                        }
+
+                        if (showCertificateNameDialog) {
+                            CertificateInputDialog(
+                                initialName = savedUserName,
+                                onDismiss = { showCertificateNameDialog = false },
+                                onConfirm = { inputName ->
+                                    showCertificateNameDialog = false
+                                    lifecycleScope.launch {
+                                        appPreferences.setUserName(inputName)
+                                    }
+                                    rewardedAdHelper.showAd(
+                                        activity = activity,
+                                        onUserEarnedReward = {
+                                            Toast.makeText(activity, strings.certificateGenerating, Toast.LENGTH_SHORT).show()
+                                            val dateFormat = SimpleDateFormat(
+                                                "dd MMMM yyyy",
+                                                if (currentLanguage == AppLanguage.ID) Locale.forLanguageTag("id-ID") else Locale.ENGLISH
+                                            )
+                                            val currentDate = dateFormat.format(Date())
+
+                                            com.henrisusanto.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(
+                                                activity = activity,
+                                                width = 1080,
+                                                height = 1560,
+                                                fileName = "sertifikat_asmaul_husna_${System.currentTimeMillis()}.png",
+                                                shareText = strings.certificateShareText,
+                                                chooserTitle = strings.certificateTitle
+                                            ) {
+                                                CertificateLayout(
+                                                    userName = inputName,
+                                                    dateString = currentDate
+                                                )
+                                            }
+                                        },
+                                        onAdNotReady = {
+                                            Toast.makeText(activity, strings.certificateAdNotReady, Toast.LENGTH_LONG).show()
+                                        }
+                                    )
+                                }
                             )
                         }
                     }

@@ -24,6 +24,7 @@ object ShareUtils {
         activity: Activity,
         width: Int = 1080,
         height: Int = 1920,
+        fileName: String = "progress_share.png",
         shareText: String = "",
         chooserTitle: String = "Share",
         content: @Composable () -> Unit
@@ -62,7 +63,7 @@ object ShareUtils {
                 rootGroup.removeView(hiddenLayout)
 
                 // Share Bitmap
-                shareBitmap(activity, bitmap, shareText, chooserTitle)
+                shareBitmap(activity, bitmap, fileName, shareText, chooserTitle)
             } catch (e: Exception) {
                 e.printStackTrace()
                 rootGroup.removeView(hiddenLayout)
@@ -70,11 +71,17 @@ object ShareUtils {
         }, 300) // 300ms delay to allow Compose rendering
     }
 
-    private fun shareBitmap(context: Context, bitmap: Bitmap, shareText: String, chooserTitle: String) {
+    private fun shareBitmap(
+        context: Context,
+        bitmap: Bitmap,
+        fileName: String,
+        shareText: String,
+        chooserTitle: String
+    ) {
         try {
             val cachePath = File(context.cacheDir, "shared_images")
             cachePath.mkdirs()
-            val file = File(cachePath, "progress_share.png")
+            val file = File(cachePath, fileName)
             val fileOutputStream = FileOutputStream(file)
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
             fileOutputStream.close()
