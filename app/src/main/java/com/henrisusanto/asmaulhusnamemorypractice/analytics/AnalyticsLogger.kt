@@ -4,10 +4,11 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 /**
- * Singleton wrapper for Firebase Analytics.
- * Acts as the single entry point for all manual analytics logging.
+ * Singleton wrapper for Firebase Analytics and Crashlytics.
+ * Acts as the single entry point for all manual analytics logging and crashlytics utilities.
  */
 object AnalyticsLogger {
 
@@ -104,6 +105,30 @@ object AnalyticsLogger {
     fun resetScreenTracking() {
         synchronized(this) {
             lastScreenName = null
+        }
+    }
+
+    /**
+     * Records a non-fatal exception to Firebase Crashlytics safely.
+     */
+    fun recordException(throwable: Throwable) {
+        try {
+            FirebaseCrashlytics.getInstance().recordException(throwable)
+            Log.d(TAG, "Exception recorded to Crashlytics: ${throwable.message}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to record exception to Crashlytics: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Writes a custom breadcrumb message to Firebase Crashlytics.
+     */
+    fun logCrashlytics(message: String) {
+        if (message.isBlank()) return
+        try {
+            FirebaseCrashlytics.getInstance().log(message)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to write Crashlytics log: ${e.message}", e)
         }
     }
 }

@@ -1,5 +1,6 @@
 [versions]
 agp = "9.3.1"
+crashlyticsPlugin = "3.0.3"
 coreKtx = "1.10.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -38,6 +39,7 @@ androidx-core-testing = { group = "androidx.arch.core", name = "core-testing", v
 
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version = "33.13.0" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
@@ -47,5 +49,6 @@ firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlyticsPlugin" }
 
 

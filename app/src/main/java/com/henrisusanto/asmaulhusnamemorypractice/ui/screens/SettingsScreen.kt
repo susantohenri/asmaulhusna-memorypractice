@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.henrisusanto.asmaulhusnamemorypractice.BuildConfig
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppLanguage
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppTheme
 import com.henrisusanto.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
@@ -202,7 +203,7 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
                                 Text(text = strings.appName, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                                Text(text = "${strings.version} 1.0.0", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(text = "${strings.version} ${BuildConfig.VERSION_NAME}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -222,6 +223,29 @@ fun SettingsScreen(
                             }
                         }
                     )
+
+                    // Debug-only Crashlytics test trigger (stripped in release build via BuildConfig.DEBUG dead-code elimination)
+                    if (BuildConfig.DEBUG) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = "Crashlytics Test", fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = MaterialTheme.colorScheme.error)
+                                Text(text = "Debug only test crash", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Button(
+                                onClick = {
+                                    throw RuntimeException("Crashlytics Test Crash (Debug Verification)")
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text("Test Crash")
+                            }
+                        }
+                    }
                     
                 }
             }
