@@ -35,6 +35,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
+import com.henrisusanto.asmaulhusnamemorypractice.analytics.AnalyticsLogger
 import com.henrisusanto.asmaulhusnamemorypractice.data.AdsManager
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppLanguage
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppPreferences
@@ -157,7 +158,15 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(LocalAppStrings provides appStrings) {
                 AsmaulHusnaMemoryPracticeTheme(darkTheme = useDarkTheme) {
                     val rootNavController = rememberNavController()
-                    
+                    val rootBackStackEntry by rootNavController.currentBackStackEntryAsState()
+                    val rootRoute = rootBackStackEntry?.destination?.route
+
+                    LaunchedEffect(rootRoute) {
+                        if (rootRoute == "settings") {
+                            AnalyticsLogger.logScreenView("settings")
+                        }
+                    }
+
                     NavHost(navController = rootNavController, startDestination = "main") {
                         composable("main") {
                             MainScreen(
@@ -167,6 +176,7 @@ class MainActivity : ComponentActivity() {
                                 interstitialAdHelper = interstitialAdHelper,
                                 rewardedAdHelper = rewardedAdHelper,
                                 currentLanguage = currentLanguage,
+                                isRootActive = (rootRoute == "main" || rootRoute == null),
                                 activity = this@MainActivity
                             )
                         }
@@ -222,6 +232,7 @@ class MainActivity : ComponentActivity() {
         interstitialAdHelper: InterstitialAdHelper,
         rewardedAdHelper: RewardedAdHelper,
         currentLanguage: AppLanguage,
+        isRootActive: Boolean,
         activity: Activity
     ) {
         val bottomNavController = rememberNavController()
@@ -230,6 +241,16 @@ class MainActivity : ComponentActivity() {
         val strings = LocalAppStrings.current
         val savedUserName by appPreferences.userNameFlow.collectAsState(initial = "")
         var showCertificateNameDialog by remember { mutableStateOf(false) }
+
+        LaunchedEffect(isRootActive, currentRoute) {
+            if (isRootActive) {
+                when (currentRoute) {
+                    "practice", null -> AnalyticsLogger.logScreenView("main")
+                    "explore" -> AnalyticsLogger.logScreenView("explore")
+                    "quiz" -> AnalyticsLogger.logScreenView("quiz")
+                }
+            }
+        }
 
         // Inject ViewModel with AppPreferences
         val viewModel: MemoryPracticeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
