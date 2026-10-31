@@ -35,12 +35,14 @@ class ReminderReceiver : BroadcastReceiver() {
 
         val activityIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("from_notification", true)
+            putExtra("notification_type", "daily_reminder")
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
             0,
             activityIntent,
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, channelId)

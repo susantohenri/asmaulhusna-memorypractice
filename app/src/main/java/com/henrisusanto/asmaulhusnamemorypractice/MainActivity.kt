@@ -1,6 +1,7 @@
 package com.henrisusanto.asmaulhusnamemorypractice
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -75,6 +76,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Track notification opened if launched via reminder
+        handleNotificationIntent(intent)
 
         // Initialize Managers
         adsManager = AdsManager()
@@ -366,6 +370,7 @@ class MainActivity : ComponentActivity() {
                                     onCardTap = {
                                         viewModel.onNext(
                                             onRoundFinished = {
+                                                AnalyticsLogger.logPracticeCompleted(totalNames = uiState.totalCount)
                                                 interstitialAdHelper.showAd(activity)
                                             }
                                         )
@@ -406,6 +411,7 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             }
                                             IconButton(onClick = {
+                                                AnalyticsLogger.logShareContent("practice_progress")
                                                 com.henrisusanto.asmaulhusnamemorypractice.utils.ShareUtils.shareComposableAsImage(
                                                     activity = activity,
                                                     shareText = strings.shareProgressText,
@@ -441,6 +447,7 @@ class MainActivity : ComponentActivity() {
                                     onNext = {
                                         viewModel.onNext(
                                             onRoundFinished = {
+                                                AnalyticsLogger.logPracticeCompleted(totalNames = uiState.totalCount)
                                                 interstitialAdHelper.showAd(activity)
                                             }
                                         )
@@ -476,6 +483,8 @@ class MainActivity : ComponentActivity() {
                                     rewardedAdHelper.showAd(
                                         activity = activity,
                                         onUserEarnedReward = {
+                                            AnalyticsLogger.logCertificateClaimed(hasCustomName = inputName.isNotBlank())
+                                            AnalyticsLogger.logShareContent("certificate")
                                             Toast.makeText(activity, strings.certificateGenerating, Toast.LENGTH_SHORT).show()
                                             val dateFormat = SimpleDateFormat(
                                                 "dd MMMM yyyy",
@@ -531,6 +540,20 @@ class MainActivity : ComponentActivity() {
         
         lifecycleScope.launch {
             adsManager.fetchAdsConfig()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleNotificationIntent(intent)
+    }
+
+    private fun handleNotificationIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra("from_notification", false) == true) {
+            val type = intent.getStringExtra("notification_type") ?: "daily_reminder"
+            AnalyticsLogger.logNotificationOpened(type)
+            intent.removeExtra("from_notification")
         }
     }
 }

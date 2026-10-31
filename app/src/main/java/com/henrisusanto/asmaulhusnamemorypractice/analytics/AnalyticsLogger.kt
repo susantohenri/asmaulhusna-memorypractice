@@ -198,4 +198,67 @@ object AnalyticsLogger {
         }
         logEvent("ad_failed", bundle)
     }
+
+    /**
+     * Logs notification_opened when the user opens the app via a system notification.
+     */
+    fun logNotificationOpened(notificationType: String = "daily_reminder") {
+        val bundle = Bundle().apply {
+            putString("notification_type", notificationType)
+        }
+        logEvent("notification_opened", bundle)
+    }
+
+    /**
+     * Logs practice_completed when user completes all 99 names.
+     */
+    fun logPracticeCompleted(totalNames: Int = 99) {
+        val bundle = Bundle().apply {
+            putInt("total_names", totalNames)
+        }
+        logEvent("practice_completed", bundle)
+    }
+
+    /**
+     * Logs quiz_completed when a quiz session is finished.
+     */
+    fun logQuizCompleted(score: Int, totalQuestions: Int) {
+        val bundle = Bundle().apply {
+            putInt("score", score)
+            putInt("total_questions", totalQuestions)
+            putBoolean("is_perfect", score == totalQuestions)
+        }
+        logEvent("quiz_completed", bundle)
+    }
+
+    /**
+     * Logs certificate_claimed when the digital certificate is awarded.
+     */
+    fun logCertificateClaimed(hasCustomName: Boolean) {
+        val bundle = Bundle().apply {
+            putBoolean("has_custom_name", hasCustomName)
+        }
+        logEvent("certificate_claimed", bundle)
+    }
+
+    /**
+     * Logs share_content when user shares progress, quiz score, or certificate.
+     */
+    fun logShareContent(contentType: String) {
+        val bundle = Bundle().apply {
+            putString("content_type", contentType)
+        }
+        logEvent("share_content", bundle)
+    }
+
+    /**
+     * Logs reminder_toggled when daily reminder is toggled.
+     */
+    fun logReminderToggled(enabled: Boolean, time: String) {
+        val bundle = Bundle().apply {
+            putBoolean("enabled", enabled)
+            putString("time", time)
+        }
+        logEvent("reminder_toggled", bundle)
+    }
 }

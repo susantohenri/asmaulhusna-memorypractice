@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.henrisusanto.asmaulhusnamemorypractice.BuildConfig
+import com.henrisusanto.asmaulhusnamemorypractice.analytics.AnalyticsLogger
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppLanguage
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppTheme
 import com.henrisusanto.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
@@ -53,6 +54,8 @@ fun SettingsScreen(
         context,
         { _, hourOfDay, minute ->
             onReminderTimeChange(hourOfDay, minute)
+            val timeStr = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute)
+            AnalyticsLogger.logReminderToggled(true, timeStr)
         },
         reminderHour,
         reminderMinute,
@@ -169,6 +172,8 @@ fun SettingsScreen(
                             checked = reminderEnabled,
                             onCheckedChange = { 
                                 onReminderToggle(it)
+                                val timeStr = String.format(Locale.getDefault(), "%02d:%02d", reminderHour, reminderMinute)
+                                AnalyticsLogger.logReminderToggled(it, timeStr)
                                 if (it) {
                                     timePickerDialog.show()
                                 }

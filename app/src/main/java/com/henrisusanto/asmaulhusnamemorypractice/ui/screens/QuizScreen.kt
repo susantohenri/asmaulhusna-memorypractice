@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.henrisusanto.asmaulhusnamemorypractice.analytics.AnalyticsLogger
 import com.henrisusanto.asmaulhusnamemorypractice.model.AsmaulHusna
 import com.henrisusanto.asmaulhusnamemorypractice.data.AppLanguage
 import com.henrisusanto.asmaulhusnamemorypractice.ui.theme.LocalAppStrings
@@ -45,8 +46,12 @@ fun QuizScreen(
             .padding(bottom = 64.dp) // Bottom nav padding
     ) {
         if (uiState.isFinished) {
-            // Trigger interstitial (onQuizFinished is called when the result card is visible or right away)
+            // Log quiz_completed and trigger interstitial
             androidx.compose.runtime.LaunchedEffect(Unit) {
+                AnalyticsLogger.logQuizCompleted(
+                    score = uiState.score,
+                    totalQuestions = uiState.totalQuestions
+                )
                 onQuizFinished()
             }
             
@@ -55,6 +60,7 @@ fun QuizScreen(
                 total = uiState.totalQuestions,
                 onTryAgain = { viewModel.startNewQuiz() },
                 onShare = {
+                    AnalyticsLogger.logShareContent("quiz_result")
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(Intent.EXTRA_TEXT, strings.shareQuizText.format(uiState.score, uiState.totalQuestions))
