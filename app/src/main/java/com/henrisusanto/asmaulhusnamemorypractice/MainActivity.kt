@@ -86,6 +86,49 @@ class MainActivity : ComponentActivity() {
         interstitialAdHelper = InterstitialAdHelper(this)
         rewardedAdHelper = RewardedAdHelper(this)
 
+        // Set User Properties
+        val country = Locale.getDefault().country.lowercase().ifBlank { "unknown" }
+        AnalyticsLogger.setUserProperty("country", country)
+
+        if (savedInstanceState == null) {
+            lifecycleScope.launch {
+                val engagement = appPreferences.getAndTrackEngagementLevel()
+                AnalyticsLogger.setUserProperty("engagement_level", engagement)
+            }
+        }
+
+        lifecycleScope.launch {
+            appPreferences.languageFlow.collect { langPref ->
+                val effectiveLang = when (langPref) {
+                    AppLanguage.AUTO -> {
+                        val loc = Locale.getDefault().language.lowercase()
+                        if (loc.startsWith("id")) "id" else "en"
+                    }
+                    AppLanguage.ID -> "id"
+                    AppLanguage.EN -> "en"
+                }
+                AnalyticsLogger.setUserProperty("language", effectiveLang)
+            }
+        }
+
+        lifecycleScope.launch {
+            appPreferences.themeFlow.collect { theme ->
+                val themeStr = when (theme) {
+                    AppTheme.AUTO -> "auto"
+                    AppTheme.LIGHT -> "light"
+                    AppTheme.DARK -> "dark"
+                }
+                AnalyticsLogger.setUserProperty("theme_mode", themeStr)
+            }
+        }
+
+        lifecycleScope.launch {
+            appPreferences.reminderEnabledFlow.collect { enabled ->
+                val status = if (enabled) "enabled" else "disabled"
+                AnalyticsLogger.setUserProperty("reminder_status", status)
+            }
+        }
+
         // Request UMP Consent
         val params = ConsentRequestParameters.Builder().build()
         val consentInformation = UserMessagingPlatform.getConsentInformation(this)

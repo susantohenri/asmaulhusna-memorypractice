@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +35,9 @@ class AppPreferences(private val context: Context) {
     private val KEY_REMINDER_MINUTE = intPreferencesKey("reminder_minute")
     private val KEY_LAST_INDEX = intPreferencesKey("last_practiced_index")
     private val KEY_USER_NAME = stringPreferencesKey("user_name_pref")
+    private val KEY_ANALYTICS_FIRST_OPEN = longPreferencesKey("analytics_first_open_time")
+    private val KEY_ANALYTICS_LAST_OPEN = longPreferencesKey("analytics_last_open_time")
+    private val KEY_ANALYTICS_OPEN_COUNT = intPreferencesKey("analytics_open_count")
 
     val languageFlow: Flow<AppLanguage> = context.dataStore.data.map { prefs ->
         val langName = prefs[KEY_LANGUAGE] ?: AppLanguage.AUTO.name
@@ -76,5 +80,35 @@ class AppPreferences(private val context: Context) {
 
     suspend fun setUserName(name: String) {
         context.dataStore.edit { it[KEY_USER_NAME] = name }
+    }
+
+    /**
+     * Determines engagement level ('new', 'active', 'dormant') and updates analytics counters.
+     */
+    suspend fun getAndTrackEngagementLevel(): String {
+        var level = "new"
+        context.dataStore.edit { prefs ->
+            val currentTime = System.currentTimeMillis()
+            val firstOpen = prefs[KEY_ANALYTICS_FIRST_OPEN] ?: 0L
+            val lastOpen = prefs[KEY_ANALYTICS_LAST_OPEN] ?: 0L
+            val openCount = (prefs[KEY_ANALYTICS_OPEN_COUNT] ?: 0) + 1
+
+            if (firstOpen == 0L) {
+                prefs[KEY_ANALYTICS_FIRST_OPEN] = currentTime
+                prefs[KEY_ANALYTICS_LAST_OPEN] = currentTime
+                prefs[KEY_ANALYTICS_OPEN_COUNT] = 1
+                level = "new"
+            } else {
+                val daysSinceLastOpen = (currentTime - lastOpen) / (1000L * 60 * 60 * 24)
+                level = when {
+                    openCount <= 1 || (currentTime - firstOpen) < 24 * 60 * 60 * 1000L -> "new"
+                    daysSinceLastOpen >= 7 -> "dormant"
+                    else -> "active"
+                }
+                prefs[KEY_ANALYTICS_LAST_OPEN] = currentTime
+                prefs[KEY_ANALYTICS_OPEN_COUNT] = openCount
+            }
+        }
+        return level
     }
 }

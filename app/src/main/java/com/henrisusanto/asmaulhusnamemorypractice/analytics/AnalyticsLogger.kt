@@ -25,6 +25,8 @@ object AnalyticsLogger {
     @Volatile
     private var lastScreenName: String? = null
 
+    private val userPropertiesCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
     val currentScreen: String
         get() = synchronized(this) { lastScreenName ?: "main" }
 
@@ -63,12 +65,19 @@ object AnalyticsLogger {
 
     /**
      * Sets a user property value.
+     * Prevents duplicate/redundant updates if the value has not changed.
+     * Rejects null or blank values to ensure data quality.
      */
     fun setUserProperty(name: String, value: String?) {
-        if (name.isBlank()) return
+        if (name.isBlank() || value.isNullOrBlank()) return
+        val trimmedValue = value.trim()
+        if (userPropertiesCache[name] == trimmedValue) {
+            return
+        }
         try {
-            firebaseAnalytics?.setUserProperty(name, value)
-            Log.d(TAG, "User property set: $name = $value")
+            firebaseAnalytics?.setUserProperty(name, trimmedValue)
+            userPropertiesCache[name] = trimmedValue
+            Log.d(TAG, "User property set: $name = $trimmedValue")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set user property '$name': ${e.message}", e)
         }
